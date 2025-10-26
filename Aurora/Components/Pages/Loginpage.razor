@@ -1,0 +1,204 @@
+﻿@page "/login"
+@inject NavigationManager NavManager
+@inject IJSRuntime JS
+
+@using DBL
+@using Models
+
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Segoe UI', sans-serif;
+        background: radial-gradient(circle at 20% 20%, #1a1f35, #0d0f1c 60%);
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+        body::before {
+            content: "";
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            top: -25%;
+            left: -25%;
+            background: linear-gradient(60deg, #00bfff33, #ff00ff22, #00ffcc33);
+            filter: blur(120px);
+            animation: auroraFlow 15s ease-in-out infinite alternate;
+            z-index: 0;
+        }
+
+    @@keyframes auroraFlow {
+        0% {
+            transform: translate(-10%, -10%) rotate(0deg);
+        }
+
+        100% {
+            transform: translate(10%, 10%) rotate(360deg);
+        }
+    }
+
+    .login-card {
+        position: relative;
+        z-index: 2;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 40px;
+        width: 360px;
+        box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+        text-align: center;
+        animation: fadeIn 1s ease forwards;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    .aurora-title {
+        color: #b3e8ff;
+        font-size: 2.2em;
+        margin-bottom: 10px;
+        letter-spacing: 2px;
+    }
+
+    .login-subtitle {
+        color: #aaa;
+        margin-bottom: 30px;
+    }
+
+    .login-input {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 15px;
+        border: none;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        outline: none;
+        transition: 0.3s;
+    }
+
+        .login-input:focus {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 8px #00ffff55;
+        }
+
+    .login-btn {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 10px;
+        background: linear-gradient(90deg, #00bfff, #00ffcc);
+        color: #0d0f1c;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+        .login-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #00ffff88;
+        }
+
+    .login-links {
+        margin-top: 20px;
+        font-size: 0.9em;
+    }
+
+        .login-links a {
+            color: #77eaff;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+            .login-links a:hover {
+                text-shadow: 0 0 8px #00ffff;
+            }
+
+    .error-msg {
+        color: #ff6b6b;
+        margin-top: 15px;
+        font-size: 0.9em;
+        animation: shake 0.3s ease;
+    }
+
+    @@keyframes shake {
+        0%, 100% {
+            transform: translateX(0);
+        }
+
+        25% {
+            transform: translateX(-5px);
+        }
+
+        75% {
+            transform: translateX(5px);
+        }
+    }
+</style>
+
+<div class="login-page">
+    <div class="login-card">
+        <h1 class="aurora-title">Aurora</h1>
+        <p class="login-subtitle">Welcome back</p>
+
+        <input type="text" placeholder="Username" class="login-input" @bind="username" />
+        <input type="password" placeholder="Password" class="login-input" @bind="password" />
+
+        <button class="login-btn" @onclick="Login">Login</button>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <p class="error-msg">@errorMessage</p>
+        }
+
+        <div class="login-links">
+            <a href="/createaccount">Create Account</a>
+            <span>•</span>
+            <a href="/forgotpassword">Forgot Password?</a>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string username = string.Empty;
+    private string password = string.Empty;
+    private string errorMessage = string.Empty;
+
+    private async Task Login()
+    {
+        try // try catch
+        {
+            ListenerDB db = new ListenerDB();
+            Listener? listener = await db.GetListenerByLoginAsync(username, password);
+
+            if (listener != null)
+            {
+               
+
+                NavManager.NavigateTo("/", forceLoad: true);
+            }
+            else
+            {
+                errorMessage = "Invalid username or password.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Something went wrong. Please try again.";
+            Console.WriteLine(ex.Message);
+        }
+    }
+}

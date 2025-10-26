@@ -1,0 +1,80 @@
+﻿body {
+    background: radial-gradient(circle at top left, #1a1a2e, #0f0f1a, #000);
+    font-family: 'Poppins', sans-serif;
+    color: white;
+    height: 100vh;
+    margin: 0;
+    overflow: hidden;
+}
+
+.login-container {
+    width: 400px;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    box-shadow: 0 0 25px rgba(128, 90, 213, 0.4);
+    margin: 100px auto;
+    padding: 40px;
+    text-align: center;
+    animation: fade-in 0.8s ease-in-out;
+}
+
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-field {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    outline: none;
+    font-size: 16px;
+}
+
+.aurora-btn {
+    background: linear-gradient(90deg, #6366f1, #8b5cf6, #a78bfa);
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.3s;
+    width: 100%;
+}
+
+    .aurora-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(167, 139, 250, 0.6);
+    }
+
+.aurora-link {
+    color: #a78bfa;
+    text-decoration: none;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+    .aurora-link:hover {
+        color: #c4b5fd;
+        text-shadow: 0 0 10px rgba(164, 155, 255, 0.8);
+    }
+
+.aurora-text {
+    color: #a78bfa;
+    text-shadow: 0 0 10px rgba(167, 139, 250, 0.7);
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

@@ -1,0 +1,41 @@
+﻿@inherits LayoutComponentBase
+
+<div class="aurora-layout">
+    <!-- Top navigation bar -->
+    <header>
+        <NavMenu />
+    </header>
+
+    <!-- Page content -->
+    <main class="aurora-content px-4">
+        @Body
+    </main>
+</div>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+
+<style>
+    .aurora-layout {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        background: linear-gradient(to bottom right, #0f2027, #203a43, #2c5364);
+        color: #f0f4f8;
+    }
+
+    header {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
+
+    .aurora-content {
+        flex: 1;
+        padding-top: 1rem;
+    }
+</style>
+    

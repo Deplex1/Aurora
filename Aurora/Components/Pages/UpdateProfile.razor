@@ -1,0 +1,221 @@
+﻿@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using DBL
+@using Models
+@inject NavigationManager NavManager
+@inject ProtectedSessionStorage sessionStorage
+
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        background: radial-gradient(circle at 20% 20%, #11172d, #070913 80%);
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #fff;
+        font-family: 'Segoe UI', sans-serif;
+        overflow: hidden;
+    }
+
+        body::before {
+            content: "";
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            background: linear-gradient(60deg, #00bfff33, #ff00ff22, #00ffcc33);
+            filter: blur(100px);
+            animation: auroraFlow 20s infinite alternate ease-in-out;
+            z-index: 0;
+        }
+
+    @@keyframes auroraFlow {
+        0% {
+            transform: translate(-10%, -10%) rotate(0deg);
+        }
+
+        100% {
+            transform: translate(10%, 10%) rotate(360deg);
+        }
+    }
+
+    .update-container {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+    }
+
+    .update-box {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 50px;
+        width: 400px;
+        box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        animation: fadeIn 1s ease-out forwards;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .profile-pic {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #00eaff;
+        margin-bottom: 15px;
+        box-shadow: 0 0 20px #00ffff66;
+    }
+
+    .file-upload {
+        margin-bottom: 20px;
+    }
+
+    .input-field {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 15px;
+        border: none;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        outline: none;
+        transition: 0.3s;
+    }
+
+        .input-field:focus {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 8px #00ffff55;
+        }
+
+    .save-btn {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 10px;
+        background: linear-gradient(90deg, #00bfff, #00ffcc);
+        color: #111;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+        .save-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #00ffff88;
+        }
+
+    .back-btn {
+        margin-top: 20px;
+        color: #77eaff;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        transition: 0.3s;
+    }
+
+        .back-btn:hover {
+            text-shadow: 0 0 10px #00ffff;
+        }
+</style>
+
+<div class="update-container">
+    <div class="update-box">
+        @if (listener == null)
+        {
+            <p>Loading your profile...</p>
+        }
+        else
+        {
+            <h2>Update Profile for @listener.username</h2>
+
+            <img src="@((listener?.ProfilePictureBase64 ?? profilePicture))" class="profile-pic" />
+
+            <div class="file-upload">
+                <InputFile OnChange="OnFileSelected" accept="image/*" />
+            </div>
+
+            <input type="password" placeholder="New Password" class="input-field" @bind="newPassword" />
+
+            <button class="save-btn" @onclick="SaveChanges">Save Changes</button>
+            <a class="back-btn" @onclick="@(() => NavManager.NavigateTo("/"))">← Back to Home</a>
+        }
+    </div>
+</div>
+
+@code {
+    private Listener? listener; // current user from session
+    private string profilePicture = "https://static.wikia.nocookie.net/jackboxgames/images/0/07/Gene.png/revision/latest?cb=20191023035508";
+    private string? newPassword;
+    private byte[]? uploadedImage;
+    private ListenerDB listenerDB = new ListenerDB();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Try getting the logged-in user from session
+        var result = await sessionStorage.GetAsync<Listener>("currentListener");
+
+        if (result.Success && result.Value != null)
+        {
+            listener = result.Value;
+
+            // if user has a profile picture in DB, you can load it here
+        }
+        else
+        {
+            // no user found — go to login
+            NavManager.NavigateTo("/login");
+        }
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        // Read uploaded file
+        var file = e.File;
+        if (file != null)
+        {
+            using var stream = file.OpenReadStream(maxAllowedSize: 10_000_000);
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            uploadedImage = memoryStream.ToArray();
+
+            // Convert to Base64 string to display preview
+            string base64Image = Convert.ToBase64String(uploadedImage);
+            profilePicture = $"data:image/png;base64,{base64Image}";
+        }
+    }
+
+    private async Task SaveChanges()
+    {
+        if (listener == null)
+            return;
+
+        // update profile picture if uploaded
+        if (uploadedImage != null)
+        {
+            await listenerDB.UpdateProfilePictureAsync(listener.userID, uploadedImage);
+        }
+
+        // update password if changed
+        if (!string.IsNullOrEmpty(newPassword))
+        {
+            await listenerDB.UpdateAsync(listener, newPassword);
+            newPassword = string.Empty;
+        }
+
+        // refresh session
+        await sessionStorage.SetAsync("currentListener", listener);
+
+        NavManager.NavigateTo("/");
+    }
+}

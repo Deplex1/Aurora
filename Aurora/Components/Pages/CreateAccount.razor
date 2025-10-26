@@ -1,0 +1,78 @@
+﻿@page "/register"
+
+@using Microsoft.AspNetCore.Components.Forms
+
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-800 to-indigo-700">
+    <div class="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-md p-8 animate-fade-in">
+
+        <div class="text-center mb-8">
+            <h1 class="text-5xl font-extrabold text-white drop-shadow-lg tracking-wide">Create Account</h1>
+            <p class="text-gray-300 mt-3 text-base">Join the Aurora community 🌌</p>
+        </div>
+
+        <EditForm Model="@registerModel" OnValidSubmit="@HandleRegister">
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-gray-200 mb-1">Username</label>
+                    <InputText @bind-Value="registerModel.Username"
+                               class="w-full px-4 py-2 rounded-xl bg-white/20 text-white placeholder-gray-400
+                                      focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all"
+                               placeholder="Choose a username" />
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-200 mb-1">Email</label>
+                    <InputText @bind-Value="registerModel.Email"
+                               class="w-full px-4 py-2 rounded-xl bg-white/20 text-white placeholder-gray-400
+                                      focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all"
+                               placeholder="Enter your email" />
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-200 mb-1">Password</label>
+                    <InputText @bind-Value="registerModel.Password" type="password"
+                               class="w-full px-4 py-2 rounded-xl bg-white/20 text-white placeholder-gray-400
+                                      focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all"
+                               placeholder="Create a password" />
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-200 mb-1">Confirm Password</label>
+                    <InputText @bind-Value="registerModel.ConfirmPassword" type="password"
+                               class="w-full px-4 py-2 rounded-xl bg-white/20 text-white placeholder-gray-400
+                                      focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all"
+                               placeholder="Confirm your password" />
+                </div>
+
+                <button type="submit"
+                        class="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold
+                               shadow-lg hover:scale-105 hover:shadow-2xl transition-transform duration-300">
+                    Create Account
+                </button>
+            </div>
+        </EditForm>
+
+        <div class="text-center mt-8 text-sm text-gray-300">
+            Already have an account?
+            <NavLink href="/login" class="aurora-link">Login here</NavLink>
+        </div>
+    </div>
+</div>
+
+@code {
+    private RegisterModel registerModel = new();
+
+    private void HandleRegister()
+    {
+        // 🪄 Replace this with your DB/API logic later
+        Console.WriteLine($"User created: {registerModel.Username}, {registerModel.Email}");
+    }
+
+    public class RegisterModel
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+}

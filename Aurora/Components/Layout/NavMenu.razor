@@ -1,0 +1,101 @@
+﻿<nav class="aurora-topnav">
+    <div class="nav-left">
+        <span class="logo">Aurora</span>
+        <NavLink href="login" class="login-btn">
+            Login
+        </NavLink>
+    </div>
+    <div class="nav-right">
+        <NavLink href="" Match="NavLinkMatch.All">
+            <span class="icon">🏠</span> Home
+        </NavLink>
+        <NavLink href="songs">
+            <span class="icon">🎵</span> Songs
+        </NavLink>
+        <NavLink href="playlists">
+            <span class="icon">📂</span> Playlists
+        </NavLink>
+        <NavLink href="ratings">
+            <span class="icon">⭐</span> Ratings
+        </NavLink>
+        <NavLink href="account">
+            <span class="icon">👤</span> Account
+        </NavLink>
+    </div>
+</nav>
+
+<style>
+    .aurora-topnav {
+        position: sticky;
+        top: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: linear-gradient(90deg, #0f2027, #203a43, #2c5364);
+        padding: 0.75rem 1.5rem;
+        z-index: 1000;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+
+        .aurora-topnav .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .aurora-topnav .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #6dd5ed;
+            letter-spacing: 1px;
+        }
+
+        .aurora-topnav .login-btn {
+            background: linear-gradient(90deg, #2193b0, #6dd5ed);
+            color: white;
+            padding: 0.4rem 0.9rem;
+            border-radius: 6px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+            .aurora-topnav .login-btn:hover {
+                transform: scale(1.05);
+                opacity: 0.9;
+            }
+
+        .aurora-topnav .nav-right {
+            display: flex;
+            gap: 1.25rem;
+        }
+
+        .aurora-topnav a {
+            display: flex;
+            align-items: center;
+            font-size: 1rem;
+            color: #f0f4f8;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            transition: background 0.3s, transform 0.2s;
+        }
+
+            .aurora-topnav a .icon {
+                margin-right: 0.4rem;
+                font-size: 1.2rem;
+            }
+
+            .aurora-topnav a:hover {
+                background: linear-gradient(90deg, #2193b0, #6dd5ed);
+                color: #fff;
+                transform: translateY(-2px);
+            }
+
+            .aurora-topnav a.active {
+                background: linear-gradient(90deg, #6dd5ed, #2193b0);
+                font-weight: bold;
+                color: #fff;
+            }
+</style>

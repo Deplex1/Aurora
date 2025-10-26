@@ -1,0 +1,143 @@
+﻿@page "/"
+@inject NavigationManager NavManager
+@inject IJSRuntime JS
+
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        background: radial-gradient(circle at 20% 20%, #11172d, #070913 80%);
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #fff;
+        font-family: 'Segoe UI', sans-serif;
+        overflow: hidden;
+    }
+
+        body::before {
+            content: "";
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            background: linear-gradient(60deg, #00bfff33, #ff00ff22, #00ffcc33);
+            filter: blur(100px);
+            animation: auroraFlow 20s infinite alternate ease-in-out;
+            z-index: 0;
+        }
+
+    @@keyframes auroraFlow {
+        0% {
+            transform: translate(-10%, -10%) rotate(0deg);
+        }
+
+        100% {
+            transform: translate(10%, 10%) rotate(360deg);
+        }
+    }
+
+    .home-container {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+    }
+
+    .welcome-box {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 50px;
+        width: 400px;
+        box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        animation: fadeIn 1s ease-out forwards;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .welcome-box span {
+        color: #00eaff;
+        font-weight: bold;
+    }
+
+    .home-buttons {
+        margin-top: 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .home-btn {
+        background: linear-gradient(90deg, #00bfff, #00ffcc);
+        border: none;
+        border-radius: 12px;
+        padding: 12px;
+        font-size: 1.1em;
+        font-weight: 600;
+        color: #111;
+        cursor: pointer;
+        transition: 0.3s ease;
+    }
+
+        .home-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px #00ffff99;
+        }
+
+    .logout-btn {
+        background: rgba(255, 80, 80, 0.8);
+        color: white;
+    }
+
+        .logout-btn:hover {
+            box-shadow: 0 0 20px #ff3333aa;
+        }
+</style>
+
+<div class="home-container">
+    <div class="welcome-box">
+        <h1>Welcome back, <span>@username</span></h1>
+        <p>Ready to dive back into the rhythm of the Aurora?</p>
+
+        <div class="home-buttons">
+            <button class="home-btn" @onclick="GoToPlaylists">My Playlists</button>
+            <button class="home-btn" @onclick="GoToSongs">Top Songs</button>
+            <button class="home-btn" @onclick="GoToUpdateProfile">Update Profile</button>
+            <button class="home-btn logout-btn" @onclick="Logout">Logout</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string? username;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        username = await JS.InvokeAsync<string>("sessionStorage.getItem", "username");
+
+        if (string.IsNullOrEmpty(username))
+        {
+            NavManager.NavigateTo("/login");
+        }
+    }
+
+    private void GoToPlaylists() => NavManager.NavigateTo("/playlists");
+    private void GoToSongs() => NavManager.NavigateTo("/songs");
+    private void GoToUpdateProfile() => NavManager.NavigateTo("/updateprofile");
+
+    private async Task Logout()
+    {
+        await JS.InvokeVoidAsync("sessionStorage.removeItem", "username");
+        NavManager.NavigateTo("/login", forceLoad: true);
+    }
+}
