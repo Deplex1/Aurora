@@ -9,30 +9,38 @@ namespace Models
     public class Listener
     {
         public int userID { get; set; }
+        
+        public string email { get; set; }
         public string username { get; set; }
-        public string? password { get; set; }
+        public string? pfpLink { get; set; }
+        public bool IsAdmin { get; set; }
 
-        // store raw image bytes (from DB)
-        public byte[]? ProfilePictureBytes { get; set; }
-
-        // auto-convert for displaying in <img src="">
-        public string? ProfilePictureBase64
+        public Listener(int userID, string username, string email, string pfpLink, bool IsAdmin) 
         {
-            get
-            {
-                if (ProfilePictureBytes != null)
-                    return $"data:image/png;base64,{Convert.ToBase64String(ProfilePictureBytes)}";
-                return null;
-            }
-        }
-
-        public Listener(int id, string username)
-        {
-            this.userID = id;
+            this.userID = userID;
+            this.email = email;
             this.username = username;
+            this.pfpLink = pfpLink;
+            this.IsAdmin = IsAdmin;
         }
 
-        public Listener() { }
+        public Listener(int userID, string username, string email, bool IsAdmin)
+        {
+            this.userID = userID;
+            this.email = email;
+            this.username = username;
+            this.IsAdmin = IsAdmin;
+        }
+
+        public Listener(string username, string email)
+        {
+            this.username = username;
+            this.email = email;
+        }
+
+
+
+
     }
 
 }

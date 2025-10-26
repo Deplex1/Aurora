@@ -22,7 +22,7 @@ namespace DBL
 
         protected override async Task<Listener> CreateModelAsync(object[] row)
         {
-         return new Listener(int.Parse(row[0].ToString()), row[1].ToString());
+         return new Listener(int.Parse(row[0].ToString()), row[1].ToString(), row[3].ToString(), ByteArrayToImageURL((byte[])row[4]).Result, bool.Parse(row[5].ToString()));
         }
 
         public async Task<List<Listener>> GetAllAsync()
@@ -41,12 +41,10 @@ namespace DBL
                 return null;
         }
 
-        public async Task<Listener> InsertGetObjAsync(Listener Listener)
+        public async Task<Listener> InsertGetObjAsync(Listener Listener, string password)
         {
             Dictionary<string, object> fillValues = new Dictionary<string, object>();
-            DateTime d = DateTime.Now;
-            string dts = $"{d.Year}-{d.Month}-{d.Day} {d.Hour}:{d.Minute}:{d.Second}";
-            fillValues.Add("datejoined", dts);
+            fillValues.Add("password", password);
             Listener returnListener = (Listener)await base.InsertGetObjAsync(fillValues);
             return returnListener;
         }
@@ -92,5 +90,12 @@ namespace DBL
                 return null;
         }
 
+
+        
+        private static async Task<string> ByteArrayToImageURL(byte[] imageBytes)
+        {
+            string base64Image = Convert.ToBase64String(imageBytes);
+            return $"data:image/jpeg;base64,{base64Image}";
+        }
     }
 }
