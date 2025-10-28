@@ -22,7 +22,7 @@ namespace DBL
 
         protected override async Task<Listener> CreateModelAsync(object[] row)
         {
-         return new Listener(int.Parse(row[0].ToString()), row[1].ToString(), row[3].ToString(), ByteArrayToImageURL((byte[])row[4]).Result, bool.Parse(row[5].ToString()));
+         return new Listener(int.Parse(row[0].ToString()), row[1].ToString(), row[3].ToString(), int.Parse(row[5].ToString()));
         }
 
         public async Task<List<Listener>> GetAllAsync()
@@ -41,9 +41,11 @@ namespace DBL
                 return null;
         }
 
-        public async Task<Listener> InsertGetObjAsync(Listener Listener, string password)
+        public async Task<Listener> InsertGetObjAsync(Listener listener, string password)
         {
             Dictionary<string, object> fillValues = new Dictionary<string, object>();
+            fillValues.Add("username", listener.username);
+            fillValues.Add("email", listener.email);
             fillValues.Add("password", password);
             Listener returnListener = (Listener)await base.InsertGetObjAsync(fillValues);
             return returnListener;

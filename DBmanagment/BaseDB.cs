@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Mysqlx.Cursor;
+using System.Collections.Generic;
 using System.Data.Common;
 
 //Version 3.4

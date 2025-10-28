@@ -13,9 +13,9 @@ namespace Models
         public string email { get; set; }
         public string username { get; set; }
         public string? pfpLink { get; set; }
-        public bool IsAdmin { get; set; }
+        public int IsAdmin { get; set; }
 
-        public Listener(int userID, string username, string email, string pfpLink, bool IsAdmin) 
+        public Listener(int userID, string username, string email, string pfpLink, int IsAdmin) 
         {
             this.userID = userID;
             this.email = email;
@@ -24,7 +24,7 @@ namespace Models
             this.IsAdmin = IsAdmin;
         }
 
-        public Listener(int userID, string username, string email, bool IsAdmin)
+        public Listener(int userID, string username, string email, int IsAdmin)
         {
             this.userID = userID;
             this.email = email;

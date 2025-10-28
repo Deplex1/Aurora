@@ -6,7 +6,7 @@ namespace DBL
     public abstract class DB
     {
 
-        private const string MySqlConnSTR = @"server=localhost;
+        private const string MySqlConnSTR = @"server=127.0.0.1;
                                     user id=root;
                                     password=josh17rog;
                                     persistsecurityinfo=True;

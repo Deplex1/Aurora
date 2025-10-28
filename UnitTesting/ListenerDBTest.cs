@@ -7,7 +7,7 @@ using Models;
 
 namespace UnitTesting
 {
-    public class ListenerDBTests
+    internal class ListenerDBTests
     {
         private readonly ListenerDB listenerDB = new ListenerDB();
 
@@ -34,15 +34,19 @@ namespace UnitTesting
             await TestDelete(insertedListener);
 
             Console.WriteLine("\n✅ All tests completed!");
+            Console.ReadKey();
         }
 
         private async Task<Listener> TestInsert()
         {
-            Console.WriteLine("➡️ Testing INSERT...");
+            Console.WriteLine("Testing INSERT...");
             Listener listener = new Listener("Test_User", "Test_Email");
             string password = "test_pass";
             var inserted = await listenerDB.InsertGetObjAsync(listener, password);
-            Console.WriteLine($"Inserted Listener ID: {inserted.userID}, Username: {inserted.username}");
+            if (!(inserted is null))
+            {
+                Console.WriteLine($"Inserted Listener ID: {inserted.userID}, Username: {inserted.username}");
+            }
             return inserted;
         }
 
