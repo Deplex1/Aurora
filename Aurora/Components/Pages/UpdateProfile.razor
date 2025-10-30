@@ -139,7 +139,7 @@
         {
             <h2>Update Profile for @listener.username</h2>
 
-            <img src="@((listener?.ProfilePictureBase64 ?? profilePicture))" class="profile-pic" />
+            <img src="" />
 
             <div class="file-upload">
                 <InputFile OnChange="OnFileSelected" accept="image/*" />
@@ -163,7 +163,6 @@
     protected override async Task OnInitializedAsync()
     {
         // Try getting the logged-in user from session
-        var result = await sessionStorage.GetAsync<Listener>("currentListener");
 
         if (result.Success && result.Value != null)
         {
@@ -216,6 +215,5 @@
         // refresh session
         await sessionStorage.SetAsync("currentListener", listener);
 
-        NavManager.NavigateTo("/");
     }
 }

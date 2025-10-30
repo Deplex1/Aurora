@@ -80,7 +80,7 @@ namespace UnitTesting
             Console.WriteLine("\nTesting UPDATE PROFILE PICTURE...");
 
             // Load sample image from local file (replace with an existing path)
-            string imagePath = "C:\\Temp\\test-image.jpg";
+            string imagePath = "C:\\Users\\Twelve.DESKTOP-MG3L518\\Downloads\\bigboss.jpg";
             byte[] imageBytes = Array.Empty<byte>();
 
             if (File.Exists(imagePath))

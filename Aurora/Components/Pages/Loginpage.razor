@@ -1,6 +1,8 @@
 ﻿@page "/login"
 @inject NavigationManager NavManager
 @inject IJSRuntime JS
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject ProtectedSessionStorage MySession
 
 @using DBL
 @using Models
@@ -186,8 +188,7 @@
 
             if (listener != null)
             {
-               
-
+                await MySession.SetAsync( listener.username, listener);
                 NavManager.NavigateTo("/", forceLoad: true);
             }
             else
