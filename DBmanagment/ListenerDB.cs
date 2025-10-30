@@ -30,10 +30,10 @@ namespace DBL
             return (List<Listener>)await SelectAllAsync();
         }
 
-        public async Task<Listener> GetListenerByPkAsync(int ListenerID)
+        public async Task<Listener> GetListenerByPkAsync(int userid)
         {
             Dictionary<string, object> p = new Dictionary<string, object>();
-            p.Add("ListenerID", ListenerID.ToString());
+            p.Add("userid", userid.ToString());
             List<Listener> list = (List<Listener>)await SelectAllAsync(p);
             if (list.Count == 1)
                 return list[0];
@@ -56,7 +56,7 @@ namespace DBL
             Dictionary<string, object> fillValues = new Dictionary<string, object>();
             Dictionary<string, object> filterValues = new Dictionary<string, object>();
             fillValues.Add("password", password);
-            filterValues.Add("ListenerID", Listener.userID.ToString());
+            filterValues.Add("userid", Listener.userID.ToString());
             return await base.UpdateAsync(fillValues, filterValues);
         }
 
@@ -75,7 +75,7 @@ namespace DBL
         public async Task<int> DeleteAsync(Listener Listener)
         {
             Dictionary<string, object> filterValues = new Dictionary<string, object>();
-            filterValues.Add("ListenerID", Listener.userID.ToString());
+            filterValues.Add("userid", Listener.userID.ToString());
             return await base.DeleteAsync(filterValues);
         }
 
