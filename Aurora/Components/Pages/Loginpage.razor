@@ -1,8 +1,8 @@
 ﻿@page "/login"
-@inject NavigationManager NavManager
-@inject IJSRuntime JS
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject NavigationManager NavManager
 @inject ProtectedSessionStorage MySession
+@inject IJSRuntime JS
 
 @using DBL
 @using Models
@@ -12,24 +12,23 @@
         margin: 0;
         padding: 0;
         font-family: 'Segoe UI', sans-serif;
-        background: radial-gradient(circle at 20% 20%, #1a1f35, #0d0f1c 60%);
+        background: radial-gradient(circle at 20% 20%, #141831, #080a14 80%);
         height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
+        color: white;
         overflow: hidden;
     }
 
         body::before {
             content: "";
             position: absolute;
-            width: 150%;
-            height: 150%;
-            top: -25%;
-            left: -25%;
+            width: 160%;
+            height: 160%;
             background: linear-gradient(60deg, #00bfff33, #ff00ff22, #00ffcc33);
             filter: blur(120px);
-            animation: auroraFlow 15s ease-in-out infinite alternate;
+            animation: auroraFlow 18s ease-in-out infinite alternate;
             z-index: 0;
         }
 
@@ -43,85 +42,95 @@
         }
     }
 
-    .login-card {
+    .login-container {
         position: relative;
         z-index: 2;
         background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(20px);
+        backdrop-filter: blur(25px);
         border-radius: 20px;
-        padding: 40px;
-        width: 360px;
-        box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+        padding: 50px 40px;
+        width: 380px;
         text-align: center;
-        animation: fadeIn 1s ease forwards;
+        box-shadow: 0 0 40px rgba(0, 255, 255, 0.2);
+        animation: fadeIn 1s ease-out forwards;
     }
 
     @@keyframes fadeIn {
         from {
             opacity: 0;
-            transform: scale(0.9);
+            transform: translateY(20px);
         }
 
         to {
             opacity: 1;
-            transform: scale(1);
+            transform: translateY(0);
         }
     }
 
     .aurora-title {
-        color: #b3e8ff;
-        font-size: 2.2em;
-        margin-bottom: 10px;
+        font-size: 2.4em;
+        background: linear-gradient(90deg, #00bfff, #00ffcc);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 700;
+        margin-bottom: 8px;
         letter-spacing: 2px;
     }
 
     .login-subtitle {
-        color: #aaa;
-        margin-bottom: 30px;
+        font-size: 0.95em;
+        color: #b7c8d9;
+        margin-bottom: 35px;
     }
 
     .login-input {
         width: 100%;
         padding: 12px;
-        margin-bottom: 15px;
+        margin-bottom: 18px;
         border: none;
         border-radius: 10px;
         background: rgba(255, 255, 255, 0.1);
-        color: white;
+        color: #fff;
         outline: none;
+        font-size: 1em;
         transition: 0.3s;
     }
 
         .login-input:focus {
             background: rgba(255, 255, 255, 0.2);
-            box-shadow: 0 0 8px #00ffff55;
+            box-shadow: 0 0 10px #00ffff66;
         }
 
     .login-btn {
         width: 100%;
-        padding: 12px;
+        padding: 13px;
+        margin-top: 5px;
         border: none;
-        border-radius: 10px;
+        border-radius: 12px;
         background: linear-gradient(90deg, #00bfff, #00ffcc);
         color: #0d0f1c;
-        font-weight: bold;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        font-size: 1.05em;
         cursor: pointer;
         transition: 0.3s;
     }
 
         .login-btn:hover {
             transform: scale(1.05);
-            box-shadow: 0 0 15px #00ffff88;
+            box-shadow: 0 0 20px #00ffff88;
         }
 
     .login-links {
-        margin-top: 20px;
+        margin-top: 25px;
         font-size: 0.9em;
+        color: #aad9ff;
     }
 
         .login-links a {
-            color: #77eaff;
+            color: #6eefff;
             text-decoration: none;
+            font-weight: 500;
             transition: 0.3s;
         }
 
@@ -142,53 +151,51 @@
         }
 
         25% {
-            transform: translateX(-5px);
+            transform: translateX(-6px);
         }
 
         75% {
-            transform: translateX(5px);
+            transform: translateX(6px);
         }
     }
 </style>
 
-<div class="login-page">
-    <div class="login-card">
-        <h1 class="aurora-title">Aurora</h1>
-        <p class="login-subtitle">Welcome back</p>
+<div class="login-container">
+    <h1 class="aurora-title">Aurora</h1>
+    <p class="login-subtitle">Welcome back to the soundverse</p>
 
-        <input type="text" placeholder="Username" class="login-input" @bind="username" />
-        <input type="password" placeholder="Password" class="login-input" @bind="password" />
+    <input type="text" placeholder="Username" class="login-input" @bind="username" />
+    <input type="password" placeholder="Password" class="login-input" @bind="password" />
 
-        <button class="login-btn" @onclick="Login">Login</button>
+    <button class="login-btn" @onclick="Login">Login</button>
 
-        @if (!string.IsNullOrEmpty(errorMessage))
-        {
-            <p class="error-msg">@errorMessage</p>
-        }
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <p class="error-msg">@errorMessage</p>
+    }
 
-        <div class="login-links">
-            <a href="/createaccount">Create Account</a>
-            <span>•</span>
-            <a href="/forgotpassword">Forgot Password?</a>
-        </div>
+    <div class="login-links">
+        <a href="/createaccount">Create Account</a>
+        <span> • </span>
+        <a href="/forgotpassword">Forgot Password?</a>
     </div>
 </div>
 
 @code {
-    private string username = string.Empty;
+    private string username = string.Empty; 
     private string password = string.Empty;
     private string errorMessage = string.Empty;
 
     private async Task Login()
     {
-        try // try catch
+        try
         {
             ListenerDB db = new ListenerDB();
             Listener? listener = await db.GetListenerByLoginAsync(username, password);
 
             if (listener != null)
             {
-                await MySession.SetAsync( listener.username, listener);
+                await MySession.SetAsync("user", listener);
                 NavManager.NavigateTo("/", forceLoad: true);
             }
             else

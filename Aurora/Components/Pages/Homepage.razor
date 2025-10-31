@@ -1,5 +1,9 @@
 ﻿@page "/"
+@using DBL
+@using Models
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @inject NavigationManager NavManager
+@inject ProtectedSessionStorage MySession
 @inject IJSRuntime JS
 
 <style>
@@ -106,7 +110,10 @@
 
 <div class="home-container">
     <div class="welcome-box">
-        <h1>Welcome back, <span>@username</span></h1>
+        @if(listener != null)
+        {
+            <h1>Welcome back, <span>@listener.username</span></h1>
+        
         <p>Ready to dive back into the rhythm of the Aurora?</p>
 
         <div class="home-buttons">
@@ -115,17 +122,25 @@
             <button class="home-btn" @onclick="GoToUpdateProfile">Update Profile</button>
             <button class="home-btn logout-btn" @onclick="Logout">Logout</button>
         </div>
+        }
+        else
+        {
+            <h1>Loading...</h1>
+        }
     </div>
 </div>
 
 @code {
-    private string? username;
+    private Listener? listener;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task  OnAfterRenderAsync(bool firstRender)
     {
-        username = await JS.InvokeAsync<string>("sessionStorage.getItem", "username");
-
-        if (string.IsNullOrEmpty(username))
+        var result = await MySession.GetAsync<Listener>("user");
+        if (result.Success)
+        {
+            listener = new Listener(result.Value);
+        }
+        else
         {
             NavManager.NavigateTo("/login");
         }
@@ -137,7 +152,7 @@
 
     private async Task Logout()
     {
-        await JS.InvokeVoidAsync("sessionStorage.removeItem", "username");
+        await MySession.DeleteAsync("user");
         NavManager.NavigateTo("/login", forceLoad: true);
     }
 }

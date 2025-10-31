@@ -1,8 +1,10 @@
 ﻿@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject NavigationManager NavManager
+@inject ProtectedSessionStorage MySession
+@inject IJSRuntime JS
+
 @using DBL
 @using Models
-@inject NavigationManager NavManager
-@inject ProtectedSessionStorage sessionStorage
 
 <style>
     body {
@@ -129,91 +131,24 @@
         }
 </style>
 
-<div class="update-container">
-    <div class="update-box">
-        @if (listener == null)
-        {
-            <p>Loading your profile...</p>
-        }
-        else
-        {
-            <h2>Update Profile for @listener.username</h2>
 
-            <img src="" />
-
-            <div class="file-upload">
-                <InputFile OnChange="OnFileSelected" accept="image/*" />
-            </div>
-
-            <input type="password" placeholder="New Password" class="input-field" @bind="newPassword" />
-
-            <button class="save-btn" @onclick="SaveChanges">Save Changes</button>
-            <a class="back-btn" @onclick="@(() => NavManager.NavigateTo("/"))">← Back to Home</a>
-        }
-    </div>
-</div>
 
 @code {
-    private Listener? listener; // current user from session
-    private string profilePicture = "https://static.wikia.nocookie.net/jackboxgames/images/0/07/Gene.png/revision/latest?cb=20191023035508";
-    private string? newPassword;
-    private byte[]? uploadedImage;
-    private ListenerDB listenerDB = new ListenerDB();
+    private Listener? listener;
 
     protected override async Task OnInitializedAsync()
     {
-        // Try getting the logged-in user from session
 
-        if (result.Success && result.Value != null)
+        var result = await MySession.GetAsync<Listener>("user");
+        if (result.Success)
         {
-            listener = result.Value;
-
-            // if user has a profile picture in DB, you can load it here
+            listener = new Listener(result.Value);
         }
         else
         {
-            // no user found — go to login
             NavManager.NavigateTo("/login");
         }
     }
 
-    private async Task OnFileSelected(InputFileChangeEventArgs e)
-    {
-        // Read uploaded file
-        var file = e.File;
-        if (file != null)
-        {
-            using var stream = file.OpenReadStream(maxAllowedSize: 10_000_000);
-            using var memoryStream = new MemoryStream();
-            await stream.CopyToAsync(memoryStream);
-            uploadedImage = memoryStream.ToArray();
-
-            // Convert to Base64 string to display preview
-            string base64Image = Convert.ToBase64String(uploadedImage);
-            profilePicture = $"data:image/png;base64,{base64Image}";
-        }
-    }
-
-    private async Task SaveChanges()
-    {
-        if (listener == null)
-            return;
-
-        // update profile picture if uploaded
-        if (uploadedImage != null)
-        {
-            await listenerDB.UpdateProfilePictureAsync(listener.userID, uploadedImage);
-        }
-
-        // update password if changed
-        if (!string.IsNullOrEmpty(newPassword))
-        {
-            await listenerDB.UpdateAsync(listener, newPassword);
-            newPassword = string.Empty;
-        }
-
-        // refresh session
-        await sessionStorage.SetAsync("currentListener", listener);
-
-    }
+  
 }
