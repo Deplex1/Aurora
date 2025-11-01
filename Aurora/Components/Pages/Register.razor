@@ -1,4 +1,5 @@
-﻿@page "/login"
+﻿@page "/createaccount"
+
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @inject NavigationManager NavManager
 @inject ProtectedSessionStorage MySession
@@ -11,23 +12,24 @@
         margin: 0;
         padding: 0;
         font-family: 'Segoe UI', sans-serif;
-        background: radial-gradient(circle at 20% 20%, #141831, #080a14 80%);
+        background: radial-gradient(circle at 20% 20%, #151a2f, #090b16 70%);
         height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: white;
         overflow: hidden;
     }
 
         body::before {
             content: "";
             position: absolute;
-            width: 160%;
-            height: 160%;
+            width: 150%;
+            height: 150%;
+            top: -25%;
+            left: -25%;
             background: linear-gradient(60deg, #00bfff33, #ff00ff22, #00ffcc33);
             filter: blur(120px);
-            animation: auroraFlow 18s ease-in-out infinite alternate;
+            animation: auroraFlow 15s ease-in-out infinite alternate;
             z-index: 0;
         }
 
@@ -41,78 +43,73 @@
         }
     }
 
-    .login-container {
+    .register-container {
         position: relative;
         z-index: 2;
         background: rgba(255, 255, 255, 0.05);
         backdrop-filter: blur(25px);
         border-radius: 20px;
-        padding: 50px 40px;
+        padding: 40px;
         width: 380px;
+        box-shadow: 0 0 30px rgba(0, 255, 255, 0.25);
         text-align: center;
-        box-shadow: 0 0 40px rgba(0, 255, 255, 0.2);
-        animation: fadeIn 1s ease-out forwards;
+        animation: fadeIn 1s ease forwards;
     }
 
     @@keyframes fadeIn {
         from {
             opacity: 0;
-            transform: translateY(20px);
+            transform: scale(0.95);
         }
 
         to {
             opacity: 1;
-            transform: translateY(0);
+            transform: scale(1);
         }
     }
 
     .aurora-title {
-        font-size: 2.4em;
-        background: linear-gradient(90deg, #00bfff, #00ffcc);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-weight: 700;
-        margin-bottom: 8px;
+        color: #b3e8ff;
+        font-size: 2.3em;
+        margin-bottom: 10px;
         letter-spacing: 2px;
+        text-shadow: 0 0 15px #00ffff55;
     }
 
     .login-subtitle {
-        font-size: 0.95em;
-        color: #b7c8d9;
-        margin-bottom: 35px;
+        color: #aaa;
+        margin-bottom: 30px;
+        font-size: 1.1em;
     }
 
-    .login-input {
+    .register-input {
         width: 100%;
         padding: 12px;
-        margin-bottom: 18px;
+        margin-bottom: 15px;
         border: none;
         border-radius: 10px;
         background: rgba(255, 255, 255, 0.1);
-        color: #fff;
+        color: white;
         outline: none;
-        font-size: 1em;
         transition: 0.3s;
     }
 
-        .login-input:focus {
+        .register-input:focus {
             background: rgba(255, 255, 255, 0.2);
-            box-shadow: 0 0 10px #00ffff66;
+            box-shadow: 0 0 10px #00ffff55;
         }
 
     .login-btn {
         width: 100%;
-        padding: 13px;
-        margin-top: 5px;
+        padding: 12px;
         border: none;
-        border-radius: 12px;
+        border-radius: 10px;
         background: linear-gradient(90deg, #00bfff, #00ffcc);
         color: #0d0f1c;
-        font-weight: 700;
-        letter-spacing: 0.5px;
-        font-size: 1.05em;
+        font-weight: bold;
         cursor: pointer;
         transition: 0.3s;
+        font-size: 1.05em;
     }
 
         .login-btn:hover {
@@ -123,18 +120,17 @@
     .login-links {
         margin-top: 25px;
         font-size: 0.9em;
-        color: #aad9ff;
+        color: #aaa;
     }
 
         .login-links a {
-            color: #6eefff;
+            color: #77eaff;
             text-decoration: none;
-            font-weight: 500;
             transition: 0.3s;
         }
 
             .login-links a:hover {
-                text-shadow: 0 0 8px #00ffff;
+                text-shadow: 0 0 10px #00ffff;
             }
 
     .error-msg {
@@ -150,23 +146,24 @@
         }
 
         25% {
-            transform: translateX(-6px);
+            transform: translateX(-5px);
         }
 
         75% {
-            transform: translateX(6px);
+            transform: translateX(5px);
         }
     }
 </style>
 
-<div class="login-container">
+<div class="register-container">
     <h1 class="aurora-title">Aurora</h1>
-    <p class="login-subtitle">Welcome back to the soundverse</p>
-        
-    <input type="text" placeholder="Username" class="login-input" @bind="username" />
-    <input type="password" placeholder="Password" class="login-input" @bind="password" />
+    <p class="login-subtitle">Create your account</p>
 
-    <button class="login-btn" @onclick="Login">Login</button>
+    <input type="text" placeholder="Username" class="register-input" @bind="username" />
+    <input type="email" placeholder="Email" class="register-input" @bind="email" />
+    <input type="password" placeholder="Password" class="register-input" @bind="password" />
+
+    <button class="login-btn" @onclick="RegisterListener">Register</button>
 
     @if (!string.IsNullOrEmpty(errorMessage))
     {
@@ -174,24 +171,23 @@
     }
 
     <div class="login-links">
-        <a href="/createaccount">Create Account</a>
-        <span> • </span>
-        <a href="/forgotpassword">Forgot Password?</a>
+        <span>Already have an account?</span>
+        <a href="/login"> Log in</a>
     </div>
 </div>
 
 @code {
-    private string username = string.Empty; 
-    private string password = string.Empty;
-    private string errorMessage = string.Empty;
+    string username = string.Empty;
+    string email = string.Empty;
+    string password = string.Empty;
+    string errorMessage = string.Empty;
 
-    private async Task Login()
+    public async Task RegisterListener()
     {
         try
         {
             ListenerDB db = new ListenerDB();
-            Listener? listener = await db.GetListenerByLoginAsync(username, password);
-
+            Listener? listener = await db.InsertGetObjAsync(new Listener(this.username, this.email), this.password);
             if (listener != null)
             {
                 await MySession.SetAsync("user", listener);
@@ -199,13 +195,12 @@
             }
             else
             {
-                errorMessage = "Invalid username or password.";
+                errorMessage = "Something went wrong, try again.";
             }
         }
         catch (Exception ex)
         {
-            errorMessage = "Something went wrong. Please try again.";
-            Console.WriteLine(ex.Message);
+            errorMessage = $"An error occurred: {ex.Message}";
         }
     }
 }

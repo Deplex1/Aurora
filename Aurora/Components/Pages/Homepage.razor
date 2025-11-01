@@ -4,7 +4,6 @@
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @inject NavigationManager NavManager
 @inject ProtectedSessionStorage MySession
-@inject IJSRuntime JS
 
 <style>
     body {
@@ -139,6 +138,7 @@
         if (result.Success)
         {
             listener = new Listener(result.Value);
+            StateHasChanged();
         }
         else
         {
