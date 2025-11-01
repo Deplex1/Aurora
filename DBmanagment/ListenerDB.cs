@@ -5,9 +5,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Net.Mail;
 
 namespace DBL
 {
+    
     public class ListenerDB : BaseDB<Listener>
     {
         protected override string GetTableName()
@@ -92,8 +94,52 @@ namespace DBL
                 return null;
         }
 
+        public async Task<Listener?> GetListenerByResetTokenAsync(string token) 
+        {
+            Dictionary<string, object> p = new Dictionary<string, object>();
+            p.Add("reset_token", token);
+            List<Listener> list = (List<Listener>)await SelectAllAsync(p);
+            if (list.Count == 1)
+                return list[0];
+            else
+                return null;
+        }
+        public async Task<int> SaveResetTokenAsync(string email, string token, DateTime expiration) 
+        {
+            Dictionary<string, object> fillValues = new Dictionary<string, object>();
+            Dictionary<string, object> filterValues = new Dictionary<string, object>();
 
-        
+            fillValues.Add("reset_token", token);
+            fillValues.Add("reset_expiration", expiration);
+            filterValues.Add("email", email);
+
+            return await base.UpdateAsync(fillValues, filterValues);
+        }
+
+        public async Task<int> ClearResetTokenAsync(int listenerId) 
+        {
+            Dictionary<string, object> fillValues = new Dictionary<string, object>();
+            Dictionary<string, object> filterValues = new Dictionary<string, object>();
+            fillValues.Add("reset_token", null);
+            fillValues.Add("reset_expiration", null);
+            filterValues.Add("userid", listenerId); 
+            return await base.UpdateAsync(fillValues, filterValues);
+        }
+
+        public async Task SendResetEmail(string toEmail, string resetLink) 
+        {
+            MailMessage mailMessage = new MailMessage();
+            string subject = "Password Reset Request";
+            string body = $"<p>We received a request to reset your password.</p>" +
+                          $"<p>Please click the link below to reset your password:</p>" +
+                          $"<a href='{resetLink}'>Reset Password</a>" +
+                          $"<p>If you did not request a password reset, please ignore this email.</p>" +
+                          $"<p>Thank you!</p>";
+            mailMessage.Subject = subject;
+            mailMessage.Body = body;
+            mailMessage.To.Add(toEmail);
+            mailMessage.IsBodyHtml = true;
+        }
         private static async Task<string> ByteArrayToImageURL(byte[] imageBytes)
         {
             string base64Image = Convert.ToBase64String(imageBytes);
