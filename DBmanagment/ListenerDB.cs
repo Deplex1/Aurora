@@ -1,4 +1,5 @@
-﻿using Models;
+﻿using Resend;
+using Models;
 using Mysqlx.Crud;
 using System;
 using System.Collections.Generic;
@@ -12,6 +13,7 @@ namespace DBL
     
     public class ListenerDB : BaseDB<Listener>
     {
+        private readonly string ApiKey = "re_7KMB4Fs1_LmXt9d3vG88d1hbayTMJpgFA";
         protected override string GetTableName()
         {
             return "users";
@@ -24,7 +26,7 @@ namespace DBL
 
         protected override async Task<Listener> CreateModelAsync(object[] row)
         {
-         return new Listener(int.Parse(row[0].ToString()), row[1].ToString(), row[3].ToString(), int.Parse(row[5].ToString()));
+         return new Listener(int.Parse(row[0].ToString()), row[1].ToString(), row[3].ToString(), row[4].ToString() , int.Parse(row[5].ToString()));
         }
 
         public async Task<List<Listener>> GetAllAsync()
@@ -126,19 +128,84 @@ namespace DBL
             return await base.UpdateAsync(fillValues, filterValues);
         }
 
+
+
         public async Task SendResetEmail(string toEmail, string resetLink) 
         {
-            MailMessage mailMessage = new MailMessage();
-            string subject = "Password Reset Request";
-            string body = $"<p>We received a request to reset your password.</p>" +
-                          $"<p>Please click the link below to reset your password:</p>" +
-                          $"<a href='{resetLink}'>Reset Password</a>" +
-                          $"<p>If you did not request a password reset, please ignore this email.</p>" +
-                          $"<p>Thank you!</p>";
-            mailMessage.Subject = subject;
-            mailMessage.Body = body;
-            mailMessage.To.Add(toEmail);
-            mailMessage.IsBodyHtml = true;
+            IResend resend = ResendClient.Create(ApiKey);
+
+            var resp = await resend.EmailSendAsync(new EmailMessage()
+            {
+                From = "onboarding@resend.dev",
+                To = toEmail,
+                Subject = "Reset Password request",
+                HtmlBody = $@"
+<html>
+  <body style='
+      font-family:Segoe UI, Roboto, sans-serif;
+      background: radial-gradient(circle at 20% 20%, #0b1224, #070913 80%);
+      color: #fff;
+      margin: 0;
+      padding: 40px;
+      text-align: center;'>
+    
+    <div style='
+        background: rgba(255,255,255,0.05);
+        backdrop-filter: blur(15px);
+        border-radius: 20px;
+        padding: 40px;
+        display: inline-block;
+        box-shadow: 0 0 25px rgba(0,255,255,0.2);
+        max-width: 500px;'>
+      
+      <h1 style='
+          color: #00eaff;
+          font-size: 28px;
+          margin-bottom: 10px;'>
+        Password Reset Request
+      </h1>
+
+      <p style='
+          font-size: 16px;
+          color: #cfd8dc;
+          margin-bottom: 30px;'>
+        Hey there 👋<br/>
+        We received a request to reset your Aurora account password.
+        Click the button below to choose a new one.
+      </p>
+
+      <a href='{resetLink}' style='
+          background: linear-gradient(90deg, #00bfff, #00ffcc);
+          color: #0a0a0a;
+          text-decoration: none;
+          padding: 14px 28px;
+          border-radius: 12px;
+          font-weight: 600;
+          font-size: 16px;
+          transition: 0.3s ease;
+          display: inline-block;'>
+        Reset My Password
+      </a>
+
+      <p style='
+          font-size: 13px;
+          color: #9ea7ad;
+          margin-top: 30px;'>
+        If you didn’t request a password reset, you can safely ignore this email.
+      </p>
+
+      <hr style='
+          border: none;
+          border-top: 1px solid rgba(255,255,255,0.1);
+          margin: 25px 0;'/>
+
+      <p style='font-size: 12px; color: #7a8594;'>
+        © 2025 Aurora • All rights reserved
+      </p>
+    </div>
+  </body>
+</html>",
+            });
         }
         private static async Task<string> ByteArrayToImageURL(byte[] imageBytes)
         {

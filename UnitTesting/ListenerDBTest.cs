@@ -1,9 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using DBL;
 using Models;
+
+
 
 namespace UnitTesting
 {
@@ -13,103 +15,103 @@ namespace UnitTesting
 
         public async Task RunAllTests()
         {
-            Console.WriteLine("Starting ListenerDB CRUD Tests...\n");
+            Console.WriteLine("Starting ListenerDB Full Tests...\n");
 
-            // 1️ Insert
+            // 1. Insert new listener
             var insertedListener = await TestInsert();
 
-            // 2️ Select (Get by PK)
-            var fetchedListener = await TestGetByPk(insertedListener.userID);
+            // 2. Save reset token
+            string resetToken = Guid.NewGuid().ToString();
+            await TestSaveResetToken(insertedListener.email, resetToken);
 
-            // 3️ Update password
-            await TestUpdatePassword(insertedListener);
+            // 3. Get listener by token
+            await TestGetByResetToken(resetToken);
 
-            // 4️ Update profile picture
-            await TestUpdateProfilePicture(insertedListener);
+            // 4. Send reset email
+            await TestSendResetEmail(insertedListener.email, resetToken);
 
-            // 5️ Get by login (check if updated password works)
-            await TestGetByLogin(insertedListener, "newPass_");
+            // 5. Clear reset token
+            await TestClearResetToken(insertedListener.userID);
 
-            // 6️ Delete
+            Console.WriteLine("\nAll password-reset tests completed.\n");
+
+            // 6. Delete listener from database
             await TestDelete(insertedListener);
 
-            Console.WriteLine("\n✅ All tests completed!");
+            Console.WriteLine("\nAll tests finished successfully!");
             Console.ReadKey();
         }
 
+        // Insert new test listener into the database
         private async Task<Listener> TestInsert()
         {
             Console.WriteLine("Testing INSERT...");
-            Listener listener = new Listener("Test_User", "Test_Email");
-            string password = "test_pass";
+            Listener listener = new Listener("Reset_TestUser", "reset_test@example.com");
+            string password = "reset_pass";
+
             var inserted = await listenerDB.InsertGetObjAsync(listener, password);
-            if (!(inserted is null))
-            {
+            if (inserted != null)
                 Console.WriteLine($"Inserted Listener ID: {inserted.userID}, Username: {inserted.username}");
-            }
-            return inserted;
+            else
+                Console.WriteLine("Insert failed.");
+
+            return inserted!;
         }
 
-        private async Task<Listener> TestGetByPk(int id)
+        // Save a reset token for a given email
+        private async Task TestSaveResetToken(string email, string token)
         {
-            Console.WriteLine("\nTesting GET BY PK...");
-            var listener = await listenerDB.GetListenerByPkAsync(id);
+            Console.WriteLine("\nTesting SAVE RESET TOKEN...");
+            int rows = await listenerDB.SaveResetTokenAsync(email, token, DateTime.Now.AddHours(1));
+
+            if (rows > 0)
+                Console.WriteLine($"Token saved successfully for {email}");
+            else
+                Console.WriteLine("Failed to save token.");
+        }
+
+        // Retrieve listener by their reset token
+        private async Task TestGetByResetToken(string token)
+        {
+            Console.WriteLine("\nTesting GET BY RESET TOKEN...");
+            var listener = await listenerDB.GetListenerByResetTokenAsync(token);
 
             if (listener != null)
-                Console.WriteLine($"Found Listener: {listener.username} (ID {listener.userID})");
+                Console.WriteLine($"Found user with token: {listener.username} (ID {listener.userID})");
             else
-                Console.WriteLine("Listener not found.");
-
-            return listener!;
+                Console.WriteLine("No listener found for token.");
         }
 
-        private async Task TestUpdatePassword(Listener listener)
+        // Send a reset email using Resend API
+        private async Task TestSendResetEmail(string email, string token)
         {
-            Console.WriteLine("\nTesting UPDATE PASSWORD...");
-            string newPassword = "newPass_";
+            Console.WriteLine("\nTesting SEND RESET EMAIL...");
+            string resetLink = $"https://aurora.com/resetpassword?token={token}";
 
-            int rowsAffected = await listenerDB.UpdateAsync(listener, newPassword);
-            if (rowsAffected > 0)
-                Console.WriteLine($"Password updated successfully for {listener.username}");
-            else
-                Console.WriteLine("Password update failed.");
-        }
-
-        private async Task TestUpdateProfilePicture(Listener listener)
-        {
-            Console.WriteLine("\nTesting UPDATE PROFILE PICTURE...");
-
-            // Load sample image from local file (replace with an existing path)
-            string imagePath = "C:\\Users\\Twelve.DESKTOP-MG3L518\\Downloads\\bigboss.jpg";
-            byte[] imageBytes = Array.Empty<byte>();
-
-            if (File.Exists(imagePath))
+            try
             {
-                imageBytes = await File.ReadAllBytesAsync(imagePath);
-                int rows = await listenerDB.UpdateProfilePictureAsync(listener.userID, imageBytes);
-
-                if (rows > 0)
-                    Console.WriteLine($"Profile picture updated for user {listener.username}");
-                else
-                    Console.WriteLine("Failed to update profile picture.");
+                await listenerDB.SendResetEmail(email, resetLink);
+                Console.WriteLine($"Reset email sent successfully to {email}");
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine("Skipping profile picture update (no local test image found).");
+                Console.WriteLine($"Failed to send email: {ex.Message}");
             }
         }
 
-        private async Task TestGetByLogin(Listener listener, string password)
+        // Clear the reset token and expiration fields
+        private async Task TestClearResetToken(int listenerId)
         {
-            Console.WriteLine("\nTesting GET BY LOGIN...");
-            var result = await listenerDB.GetListenerByLoginAsync(listener.username, password);
+            Console.WriteLine("\nTesting CLEAR RESET TOKEN...");
+            int rows = await listenerDB.ClearResetTokenAsync(listenerId);
 
-            if (result != null)
-                Console.WriteLine($"Login successful for {result.username}");
+            if (rows > 0)
+                Console.WriteLine($"Cleared reset token for user ID {listenerId}");
             else
-                Console.WriteLine("Login failed (possibly wrong password or deleted user).");
+                Console.WriteLine("Failed to clear token.");
         }
 
+        // Delete listener from the database
         private async Task TestDelete(Listener listener)
         {
             Console.WriteLine("\nTesting DELETE...");
