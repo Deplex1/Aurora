@@ -26,7 +26,29 @@ namespace DBL
 
         protected override async Task<Listener> CreateModelAsync(object[] row)
         {
-         return new Listener(int.Parse(row[0].ToString()), row[1].ToString(), row[3].ToString(), row[4].ToString() , int.Parse(row[5].ToString()));
+            byte[]? blobBytes = null;
+
+            if (row[4] != DBNull.Value)
+            {
+                blobBytes = (byte[])row[4];
+            }
+
+            string? base64Image = null;
+
+            if (blobBytes != null && blobBytes.Length > 0)
+            {
+                string base64 = Convert.ToBase64String(blobBytes);
+                base64Image = $"data:image/jpeg;base64,{base64}";
+            }
+
+            return new Listener(
+                int.Parse(row[0].ToString()),
+                row[1].ToString(),
+                row[3].ToString(),
+                base64Image,
+                int.Parse(row[5].ToString())
+            );
+
         }
 
         public async Task<List<Listener>> GetAllAsync()
@@ -136,12 +158,12 @@ namespace DBL
 
             var resp = await resend.EmailSendAsync(new EmailMessage()
             {
-                From = "onboarding@resend.dev",
+                From = "noreply@aruroa321.run.place",
                 To = toEmail,
                 Subject = "Reset Password request",
                 HtmlBody = $@"
 <html>
-  <body style='
+  <body style=' 
       font-family:Segoe UI, Roboto, sans-serif;
       background: radial-gradient(circle at 20% 20%, #0b1224, #070913 80%);
       color: #fff;
@@ -207,6 +229,8 @@ namespace DBL
 </html>",
             });
         }
+
+        //converts ByteArray to Image URL in base 64 to show on site
         private static async Task<string> ByteArrayToImageURL(byte[] imageBytes)
         {
             string base64Image = Convert.ToBase64String(imageBytes);
