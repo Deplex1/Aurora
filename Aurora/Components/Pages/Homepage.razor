@@ -132,7 +132,7 @@
 @code {
     private Listener? listener;
 
-    protected override async Task  OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         var result = await MySession.GetAsync<Listener>("user");
         if (result.Success)

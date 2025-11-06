@@ -15,6 +15,7 @@ namespace Models
             this.pfpLink = string.Empty;
             this.userID = 0;
             this.IsAdmin = 0;
+            this.reset_code = string.Empty;
         }
         public int userID { get; set; }
         
@@ -22,6 +23,8 @@ namespace Models
         public string username { get; set; }
         public string? pfpLink { get; set; }
         public int IsAdmin { get; set; }
+        
+        public string reset_code { get; set; }
 
         public Listener(int userID, string username, string email, string pfpLink, int IsAdmin) 
         {
@@ -30,6 +33,16 @@ namespace Models
             this.username = username;
             this.pfpLink = pfpLink;
             this.IsAdmin = IsAdmin;
+        }
+        public Listener(int userID, string username, string email, string pfpLink, int IsAdmin, string resendCode)
+        {
+            this.userID = userID;
+            this.email = email;
+            this.username = username;
+            this.pfpLink = pfpLink;
+            this.IsAdmin = IsAdmin;
+            this.reset_code = resendCode;
+
         }
 
         public Listener(int userID, string username, string email, int IsAdmin)

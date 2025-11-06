@@ -46,7 +46,8 @@ namespace DBL
                 row[1].ToString(),
                 row[3].ToString(),
                 base64Image,
-                int.Parse(row[5].ToString())
+                int.Parse(row[5].ToString()),
+                row[6].ToString()
             );
 
         }
@@ -152,18 +153,79 @@ namespace DBL
 
 
 
-        public async Task SendResetEmail(string toEmail, string resetLink) 
+        // 🔹 Get listener by email
+        public async Task<Listener?> GetListenerByEmailAsync(string email)
+        {
+            Dictionary<string, object> p = new Dictionary<string, object>();
+            p.Add("email", email);
+            List<Listener> list = (List<Listener>)await SelectAllAsync(p);
+            if (list.Count == 1)
+                return list[0];
+            else
+                return null;
+        }
+
+        // 🔹 Save reset code (OTP) and expiration
+        public async Task<int> SaveResetCodeAsync(string email, string code)
+        {
+            Dictionary<string, object> fillValues = new Dictionary<string, object>();
+            Dictionary<string, object> filterValues = new Dictionary<string, object>();
+
+            fillValues.Add("ResetCode", code);
+            filterValues.Add("email", email);
+
+            int result = await base.UpdateAsync(fillValues, filterValues);
+
+            if (result > 0)
+            {
+                // Fire and forget task — clean code after 5 minutes
+                _ = Task.Run(async () =>
+                {
+                    await Task.Delay(TimeSpan.FromMinutes(5));
+                    await ClearResetCodeAsync(email);
+                });
+            }
+
+            return result;
+        }
+
+        public async Task<int> ClearResetCodeAsync(string email)
+        {
+            Dictionary<string, object> fillValues = new Dictionary<string, object>();
+            Dictionary<string, object> filterValues = new Dictionary<string, object>();
+
+            fillValues.Add("reset_code", null);
+            filterValues.Add("email", email);
+
+            return await base.UpdateAsync(fillValues, filterValues);
+        }
+
+
+        // 🔹 Update password by email
+        public async Task<int> UpdatePasswordByEmailAsync(string email, string newPassword)
+        {
+            Dictionary<string, object> fillValues = new Dictionary<string, object>();
+            Dictionary<string, object> filterValues = new Dictionary<string, object>();
+
+            fillValues.Add("password", newPassword);
+            filterValues.Add("email", email);
+
+            return await base.UpdateAsync(fillValues, filterValues);
+        }
+
+        // 🔹 Send reset code email (with the 6-digit OTP)
+        public async Task SendResetCodeEmail(string toEmail, string code)
         {
             IResend resend = ResendClient.Create(ApiKey);
 
             var resp = await resend.EmailSendAsync(new EmailMessage()
             {
-                From = "noreply@aruroa321.run.place",
+                From = "Aurora <onboarding@resend.dev>",
                 To = toEmail,
-                Subject = "Reset Password request",
+                Subject = "Your Aurora Password Reset Code",
                 HtmlBody = $@"
 <html>
-  <body style=' 
+  <body style='
       font-family:Segoe UI, Roboto, sans-serif;
       background: radial-gradient(circle at 20% 20%, #0b1224, #070913 80%);
       color: #fff;
@@ -184,7 +246,7 @@ namespace DBL
           color: #00eaff;
           font-size: 28px;
           margin-bottom: 10px;'>
-        Password Reset Request
+        Password Reset Code
       </h1>
 
       <p style='
@@ -192,22 +254,22 @@ namespace DBL
           color: #cfd8dc;
           margin-bottom: 30px;'>
         Hey there 👋<br/>
-        We received a request to reset your Aurora account password.
-        Click the button below to choose a new one.
+        Use the code below to reset your Aurora account password.<br/>
+        This code will expire in 10 minutes.
       </p>
 
-      <a href='{resetLink}' style='
+      <div style='
           background: linear-gradient(90deg, #00bfff, #00ffcc);
           color: #0a0a0a;
-          text-decoration: none;
-          padding: 14px 28px;
+          font-size: 32px;
+          font-weight: bold;
+          padding: 20px 0;
           border-radius: 12px;
-          font-weight: 600;
-          font-size: 16px;
-          transition: 0.3s ease;
-          display: inline-block;'>
-        Reset My Password
-      </a>
+          letter-spacing: 5px;
+          margin: 0 auto;
+          width: 200px;'>
+        {code}
+      </div>
 
       <p style='
           font-size: 13px;
@@ -220,15 +282,17 @@ namespace DBL
           border: none;
           border-top: 1px solid rgba(255,255,255,0.1);
           margin: 25px 0;'/>
-
       <p style='font-size: 12px; color: #7a8594;'>
         © 2025 Aurora • All rights reserved
       </p>
     </div>
   </body>
-</html>",
+</html>"
             });
+
+            Console.WriteLine(resp);
         }
+
 
         //converts ByteArray to Image URL in base 64 to show on site
         private static async Task<string> ByteArrayToImageURL(byte[] imageBytes)

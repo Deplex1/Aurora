@@ -186,7 +186,7 @@
     private string errorMessage = string.Empty;
 
     private async Task Login()
-    {
+        {
         try
         {
             ListenerDB db = new ListenerDB();
@@ -195,7 +195,7 @@
             if (listener != null)
             {
                 await MySession.SetAsync("user", listener);
-                NavManager.NavigateTo("/", forceLoad: true);
+                NavManager.NavigateTo("/");
             }
             else
             {
