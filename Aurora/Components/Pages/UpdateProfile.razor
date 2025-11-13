@@ -132,8 +132,13 @@
         }
 </style>
 
-
-<div class="update-container">
+@if (!isLoaded)
+{
+    <p>Loading your profile...</p>
+}
+else if (listener != null)
+{
+    <div class="update-container">
     <div class="update-box">
         <h2>Update Profile</h2>
 
@@ -167,9 +172,13 @@
         }
     </div>
 </div>
+}
+
+
+
 
 @code {
-    
+
     private Listener? listener;
     private byte[]? uploadedImageBytes;
     private string profilePictureNEW = string.Empty;
@@ -179,19 +188,27 @@
     private string confirmPassword = string.Empty;
     private string statusMessage = string.Empty;
 
-    protected override async Task OnInitializedAsync()
+    private bool isLoaded = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        var result = await MySession.GetAsync<Listener>("user");
-        if (result.Success)
+        if (firstRender)
         {
-            listener = new Listener(result.Value);
+            var result = await MySession.GetAsync<Listener>("user");
+            if (result.Success)
+            {
+                listener = new Listener(result.Value);
+            }
+            else
+            {
+                NavManager.NavigateTo("/login");
+            }
+
+            isLoaded = true;
             StateHasChanged();
         }
-        else
-        {
-            NavManager.NavigateTo("/login");
-        }
     }
+
 
     // Handles file upload
     private async Task OnFileSelected(InputFileChangeEventArgs e)
@@ -212,8 +229,8 @@
                 ListenerDB db = new ListenerDB();
 
                 await db.UpdateProfilePictureAsync(listener.userID, uploadedImageBytes);
-
                 Console.WriteLine("Profile picture updated successfully!");
+                listener.pfpLink = profilePictureNEW;
             }
             catch (Exception ex)
             {
@@ -239,8 +256,7 @@
 
             if (rows > 0)
             {
-                statusMessage = "Profile picture updated successfully!";
-                listener.pfpLink = listener.pfpLink;
+                statusMessage = "Profile picture updated successfully";
                 await MySession.SetAsync("user", listener);
             }
             else

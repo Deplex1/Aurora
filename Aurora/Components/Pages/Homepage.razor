@@ -134,6 +134,8 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (!firstRender) return;
+
         var result = await MySession.GetAsync<Listener>("user");
         if (result.Success)
         {
@@ -144,6 +146,7 @@
         {
             NavManager.NavigateTo("/login");
         }
+
     }
 
     private void GoToPlaylists() => NavManager.NavigateTo("/playlists");
