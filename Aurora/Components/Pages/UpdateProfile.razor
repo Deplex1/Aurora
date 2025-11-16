@@ -1,6 +1,7 @@
 ﻿@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @inject NavigationManager NavManager
 @inject ProtectedSessionStorage MySession
+@inject IJSRuntime JS
 
 @using DBL
 @using Models
@@ -33,13 +34,16 @@
         }
 
     @@keyframes auroraFlow {
-        0% {
-            transform: translate(-10%, -10%) rotate(0deg);
-        }
+        0%
 
-        100% {
-            transform: translate(10%, 10%) rotate(360deg);
-        }
+    {
+        transform: translate(-10%, -10%) rotate(0deg);
+    }
+
+    100% {
+        transform: translate(10%, 10%) rotate(360deg);
+    }
+
     }
 
     .update-container {
@@ -59,15 +63,17 @@
     }
 
     @@keyframes fadeIn {
-        from {
+        from
+        {
             opacity: 0;
             transform: translateY(20px);
         }
 
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
     }
 
     .profile-pic {
@@ -132,15 +138,13 @@
         }
 </style>
 
-
 <div class="update-container">
     <div class="update-box">
         <h2>Update Profile</h2>
 
         @if (listener != null)
         {
-            <!-- Profile Picture Preview -->
-            <img src="@listener.pfpLink" class="profile-pic" alt="Profile Picture" />
+            <img src="@pfpPreview" id="profileImage" class="profile-pic" alt="Profile Picture" />
 
             <InputFile OnChange="OnFileSelected" class="file-upload" />
 
@@ -159,7 +163,7 @@
                 <p style="color: #00eaff; margin-top: 15px;">@statusMessage</p>
             }
 
-            <a href="/" class="back-btn">← Back to Home</a>
+            <a href="/" class="back-btn">Back to Home</a>
         }
         else
         {
@@ -169,10 +173,9 @@
 </div>
 
 @code {
-    
     private Listener? listener;
     private byte[]? uploadedImageBytes;
-    private string profilePictureNEW = string.Empty;
+    private string pfpPreview = "/images/default-pfp.png";
 
     private string currentPassword = string.Empty;
     private string newPassword = string.Empty;
@@ -182,48 +185,52 @@
     protected override async Task OnInitializedAsync()
     {
         var result = await MySession.GetAsync<Listener>("user");
-        if (result.Success)
+
+        if (!result.Success)
         {
-            listener = new Listener(result.Value);
-            StateHasChanged();
+            NavManager.NavigateTo("/login");
+            return;
+        }
+
+        listener = new Listener(result.Value);
+        ListenerDB db = new ListenerDB();
+        var freshListener = await db.GetListenerByPkAsync(listener.userID);
+
+        if (freshListener == null)
+        {
+            NavManager.NavigateTo("/login");
+            return;
+        }
+
+        listener = freshListener;
+
+        if (!string.IsNullOrEmpty(listener.pfpLink))
+        {
+            pfpPreview = listener.pfpLink;
         }
         else
         {
-            NavManager.NavigateTo("/login");
+            pfpPreview = "/images/default-pfp.png";
         }
     }
 
-    // Handles file upload
     private async Task OnFileSelected(InputFileChangeEventArgs e)
     {
         var file = e.File;
-        if (file != null)
-        {
-            using var stream = file.OpenReadStream(maxAllowedSize: 10_000_000);
-            using var memoryStream = new MemoryStream();
-            await stream.CopyToAsync(memoryStream);
-            uploadedImageBytes = memoryStream.ToArray();
+        if (file == null)
+            return;
 
-            string base64Image = Convert.ToBase64String(uploadedImageBytes);
-            profilePictureNEW = $"data:image/png;base64,{base64Image}";
+        using var stream = file.OpenReadStream(maxAllowedSize: 10_000_000);
+        using var memory = new MemoryStream();
+        await stream.CopyToAsync(memory);
+        uploadedImageBytes = memory.ToArray();
 
-            try
-            {
-                ListenerDB db = new ListenerDB();
+        string base64 = Convert.ToBase64String(uploadedImageBytes);
+        pfpPreview = "data:image/png;base64," + base64;
 
-                await db.UpdateProfilePictureAsync(listener.userID, uploadedImageBytes);
-
-                Console.WriteLine("Profile picture updated successfully!");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error updating profile picture: {ex.Message}");
-            }
-        }
+        await JS.InvokeVoidAsync("updatePfpPreview", pfpPreview);
     }
 
-
-    // Updates profile picture in DB
     private async Task UpdateProfilePicture()
     {
         if (listener == null || uploadedImageBytes == null)
@@ -232,39 +239,34 @@
             return;
         }
 
-        try
-        {
-            ListenerDB db = new ListenerDB();
-            int rows = await db.UpdateProfilePictureAsync(listener.userID, uploadedImageBytes);
+        ListenerDB db = new ListenerDB();
+        int rows = await db.UpdateProfilePictureAsync(listener.userID, uploadedImageBytes);
 
-            if (rows > 0)
-            {
-                statusMessage = "Profile picture updated successfully!";
-                listener.pfpLink = listener.pfpLink;
-                await MySession.SetAsync("user", listener);
-            }
-            else
-            {
-                statusMessage = "Failed to update profile picture.";
-            }
-        }
-        catch (Exception ex)
+        if (rows > 0)
         {
-            statusMessage = $"Error: {ex.Message}";
+            string base64 = Convert.ToBase64String(uploadedImageBytes);
+            listener.pfpLink = "data:image/png;base64," + base64;
+
+            await MySession.SetAsync("user", listener);
+
+            statusMessage = "Profile picture updated successfully.";
+        }
+        else
+        {
+            statusMessage = "Failed to update profile picture.";
         }
     }
 
-    // Changes password in DB
     private async Task ChangePassword()
     {
         if (listener == null)
             return;
 
-        if (string.IsNullOrWhiteSpace(currentPassword) ||
-            string.IsNullOrWhiteSpace(newPassword) ||
-            string.IsNullOrWhiteSpace(confirmPassword))
+        if (string.IsNullOrWhiteSpace(currentPassword)
+            || string.IsNullOrWhiteSpace(newPassword)
+            || string.IsNullOrWhiteSpace(confirmPassword))
         {
-            statusMessage = "Please fill all password fields.";
+            statusMessage = "Please fill all fields.";
             return;
         }
 
@@ -274,32 +276,24 @@
             return;
         }
 
-        try
+        ListenerDB db = new ListenerDB();
+        var loginCheck = await db.GetListenerByLoginAsync(listener.username, currentPassword);
+
+        if (loginCheck == null)
         {
-            ListenerDB db = new ListenerDB();
-
-            var loginCheck = await db.GetListenerByLoginAsync(listener.username, currentPassword);
-            if (loginCheck == null)
-            {
-                statusMessage = "Current password is incorrect.";
-                return;
-            }
-
-            int rows = await db.UpdateAsync(listener, newPassword);
-
-            if (rows > 0)
-            {
-                statusMessage = "Password updated successfully!";
-            }
-            else
-            {
-                statusMessage = "Password update failed.";
-            }
+            statusMessage = "Current password is incorrect.";
+            return;
         }
-        catch (Exception ex)
+
+        int rows = await db.UpdateAsync(listener, newPassword);
+
+        if (rows > 0)
         {
-            statusMessage = $"Error: {ex.Message}";
+            statusMessage = "Password updated successfully.";
+        }
+        else
+        {
+            statusMessage = "Password update failed.";
         }
     }
 }
-
