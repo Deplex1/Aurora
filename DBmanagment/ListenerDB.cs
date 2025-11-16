@@ -129,13 +129,12 @@ namespace DBL
             else
                 return null;
         }
-        public async Task<int> SaveResetTokenAsync(string email, string token, DateTime expiration) 
+        public async Task<int> SaveResetTokenAsync(string email, string token) 
         {
             Dictionary<string, object> fillValues = new Dictionary<string, object>();
             Dictionary<string, object> filterValues = new Dictionary<string, object>();
 
             fillValues.Add("reset_token", token);
-            fillValues.Add("reset_expiration", expiration);
             filterValues.Add("email", email);
 
             return await base.UpdateAsync(fillValues, filterValues);
@@ -146,7 +145,6 @@ namespace DBL
             Dictionary<string, object> fillValues = new Dictionary<string, object>();
             Dictionary<string, object> filterValues = new Dictionary<string, object>();
             fillValues.Add("reset_token", null);
-            fillValues.Add("reset_expiration", null);
             filterValues.Add("userid", listenerId); 
             return await base.UpdateAsync(fillValues, filterValues);
         }
@@ -194,7 +192,7 @@ namespace DBL
             Dictionary<string, object> fillValues = new Dictionary<string, object>();
             Dictionary<string, object> filterValues = new Dictionary<string, object>();
 
-            fillValues.Add("reset_code", null);
+            fillValues.Add("ResetCode", 0);
             filterValues.Add("email", email);
 
             return await base.UpdateAsync(fillValues, filterValues);
