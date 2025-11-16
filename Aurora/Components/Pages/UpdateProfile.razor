@@ -64,10 +64,11 @@
 
     @@keyframes fadeIn {
         from
-        {
-            opacity: 0;
-            transform: translateY(20px);
-        }
+
+    {
+        opacity: 0;
+        transform: translateY(20px);
+    }
 
     to {
         opacity: 1;
@@ -138,7 +139,6 @@
         }
 </style>
 
-
 <div class="update-container">
     <div class="update-box">
         <h2>Update Profile</h2>
@@ -172,13 +172,8 @@
         }
     </div>
 </div>
-}
-
-
-
 
 @code {
-    
     private Listener? listener;
     private byte[]? uploadedImageBytes;
     private string pfpPreview = "/images/default-pfp.png";
@@ -191,18 +186,35 @@
     protected override async Task OnInitializedAsync()
     {
         var result = await MySession.GetAsync<Listener>("user");
-        if (result.Success)
+
+        if (!result.Success)
         {
-            listener = new Listener(result.Value);
-            StateHasChanged();
+            NavManager.NavigateTo("/login");
+            return;
+        }
+
+        listener = new Listener(result.Value);
+        ListenerDB db = new ListenerDB();
+        var freshListener = await db.GetListenerByPkAsync(listener.userID);
+
+        if (freshListener == null)
+        {
+            NavManager.NavigateTo("/login");
+            return;
+        }
+
+        listener = freshListener;
+
+        if (!string.IsNullOrEmpty(listener.pfpLink))
+        {
+            pfpPreview = listener.pfpLink;
         }
         else
         {
-            NavManager.NavigateTo("/login");
+            pfpPreview = "/images/default-pfp.png";
         }
     }
 
-    // Handles file upload
     private async Task OnFileSelected(InputFileChangeEventArgs e)
     {
         var file = e.File;
@@ -217,19 +229,7 @@
         string base64 = Convert.ToBase64String(uploadedImageBytes);
         pfpPreview = "data:image/png;base64," + base64;
 
-            try
-            {
-                ListenerDB db = new ListenerDB();
-
-                await db.UpdateProfilePictureAsync(listener.userID, uploadedImageBytes);
-
-                Console.WriteLine("Profile picture updated successfully!");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error updating profile picture: {ex.Message}");
-            }
-        }
+        await JS.InvokeVoidAsync("updatePfpPreview", pfpPreview);
     }
 
     private async Task UpdateProfilePicture()
@@ -243,20 +243,18 @@
         ListenerDB db = new ListenerDB();
         int rows = await db.UpdateProfilePictureAsync(listener.userID, uploadedImageBytes);
 
-            if (rows > 0)
-            {
-                statusMessage = "Profile picture updated successfully!";
-                listener.pfpLink = listener.pfpLink;
-                await MySession.SetAsync("user", listener);
-            }
-            else
-            {
-                statusMessage = "Failed to update profile picture.";
-            }
-        }
-        catch (Exception ex)
+        if (rows > 0)
         {
-            statusMessage = $"Error: {ex.Message}";
+            string base64 = Convert.ToBase64String(uploadedImageBytes);
+            listener.pfpLink = "data:image/png;base64," + base64;
+
+            await MySession.SetAsync("user", listener);
+
+            statusMessage = "Profile picture updated successfully.";
+        }
+        else
+        {
+            statusMessage = "Failed to update profile picture.";
         }
     }
 
