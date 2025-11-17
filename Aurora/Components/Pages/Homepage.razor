@@ -153,7 +153,9 @@
     private void GoToPlaylists() => NavManager.NavigateTo("/playlists");
     private void GoToSongs() => NavManager.NavigateTo("/songs");
     private void GoToUpdateProfile() => NavManager.NavigateTo("/updateprofile");
+    private void GoToAdminPanel() => NavManager.NavigateTo("/admin/users");
 
+    
     private async Task Logout()
     {
         await MySession.DeleteAsync("user");

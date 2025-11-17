@@ -6,11 +6,10 @@ namespace DBL
     public abstract class DB
     {
 
-        private const string MySqlConnSTR = @"server=127.0.0.1;
-                                    user id=root;
-                                    password=josh17rog;
-                                    persistsecurityinfo=True;
-                                    database=auroradb";
+        private const string MySqlConnSTR = @"server=127.0.0.1:3306;
+                                    user id=yarin_admin;
+                                    password=YourNewSecurePassword;
+                                    database=aurora";
 
         protected DbConnection conn;
         protected DbCommand cmd;

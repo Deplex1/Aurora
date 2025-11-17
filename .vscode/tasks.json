@@ -1,0 +1,19 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Open Vivaldi",
+            "type": "shell",
+            "command": "vivaldi",
+            "args": [
+                "--new-window",
+                "http://localhost:5158"
+            ],
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

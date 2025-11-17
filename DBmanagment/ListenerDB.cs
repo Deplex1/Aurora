@@ -106,6 +106,16 @@ namespace DBL
             return await base.DeleteAsync(filterValues);
         }
 
+        // 🔹 Set or clear admin flag for a listener
+        public async Task<int> SetAdminAsync(int userId, int isAdmin)
+        {
+            Dictionary<string, object> fillValues = new Dictionary<string, object>();
+            Dictionary<string, object> filterValues = new Dictionary<string, object>();
+            fillValues.Add("IsAdmin", isAdmin);
+            filterValues.Add("userid", userId.ToString());
+            return await base.UpdateAsync(fillValues, filterValues);
+        }
+
         public async Task<Listener?> GetListenerByLoginAsync(string username, string password)
         {
             Dictionary<string, object> p = new Dictionary<string, object>();

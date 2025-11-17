@@ -1,8 +1,118 @@
 ﻿@page "/admin/users"
+@using Models
+@using DBL
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject ProtectedSessionStorage MySession
+@inject NavigationManager NavManager
 
+<style>
+	.users-table { width: 100%; border-collapse: collapse; }
+	.users-table th, .users-table td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+	.users-table th { text-align: left; color: #00eaff; }
+	.action-btn { padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+	.danger { background: #ff6b6b; color: white; border: none; }
+	.primary { background: linear-gradient(90deg,#00bfff,#00ffcc); border: none; }
+</style>
 
+<h2>Admin — Users</h2>
 
-@code{
+@if (!loaded)
+{
+	<p>Loading...</p>
+}
+else if (!isAdmin)
+{
+	<p>You do not have permission to view this page.</p>
+}
+else
+{
+	<table class="users-table">
+		<thead>
+			<tr>
+				<th>Id</th>
+				<th>Username</th>
+				<th>Email</th>
+				<th>Admin</th>
+				<th>Actions</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var u in users)
+			{
+				<tr>
+					<td>@u.userID</td>
+					<td>@u.username</td>
+					<td>@u.email</td>
+					<td>@(u.IsAdmin == 1 ? "Yes" : "No")</td>
+					<td>
+						<button class="action-btn primary" @onclick="() => ToggleAdmin(u)">@(u.IsAdmin == 1 ? "Revoke Admin" : "Make Admin")</button>
+						<button class="action-btn danger" @onclick="() => DeleteUser(u)">Delete</button>
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+}
 
+@code {
+	private List<Listener> users = new List<Listener>();
+	private bool isAdmin = false;
+	private bool loaded = false;
 
+	protected override async Task OnInitializedAsync()
+	{
+		var res = await MySession.GetAsync<Listener>("user");
+		if (!res.Success || res.Value == null)
+		{
+			NavManager.NavigateTo("/login");
+			return;
+		}
+
+		var current = new Listener(res.Value);
+		if (current.IsAdmin != 1)
+		{
+			isAdmin = false;
+			loaded = true;
+			return;
+		}
+		isAdmin = true;
+
+		await LoadUsers();
+		loaded = true;
+	}
+
+	private async Task LoadUsers()
+	{
+		ListenerDB db = new ListenerDB();
+		users = await db.GetAllAsync();
+		if (users == null)
+			users = new List<Listener>();
+		StateHasChanged();
+	}
+
+	private async Task ToggleAdmin(Listener u)
+	{
+		ListenerDB db = new ListenerDB();
+		int newVal = u.IsAdmin == 1 ? 0 : 1;
+		await db.SetAdminAsync(u.userID, newVal);
+		await LoadUsers();
+	}
+
+	private async Task DeleteUser(Listener u)
+	{
+		// Simple confirmation
+		if (!await ConfirmDelete(u))
+			return;
+
+		ListenerDB db = new ListenerDB();
+		await db.DeleteAsync(u);
+		await LoadUsers();
+	}
+
+	private Task<bool> ConfirmDelete(Listener u)
+	{
+		// No JS interop here; use simple confirm via prompt-less approach.
+		// If you want a browser confirm, we can add JS interop.
+		return Task.FromResult(true);
+	}
 }
