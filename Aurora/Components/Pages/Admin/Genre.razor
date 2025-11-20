@@ -1,0 +1,99 @@
+﻿@page "/admin/genre"
+@using DBL
+@using Models
+
+
+
+<h2>Genre Management</h2>
+
+<input @bind="search" placeholder="Search..." />
+<button @onclick="LoadGenres">Filter</button>
+
+<hr />
+
+<input @bind="newGenreName" placeholder="New Genre Name" />
+<button @onclick="AddGenre">Add Genre</button>
+
+<hr />
+
+<table>
+    {
+    <thead>
+        {
+        <tr>
+            {
+            <th>ID</th>
+            <th>Name</th>
+            <th>Delete</th>
+            }
+        </tr>
+        }
+    </thead>
+
+    <tbody>
+        {
+        @foreach (var g in genres)
+        {
+            <tr>
+                {
+                <td>@g.genreID</td>
+                <td>@g.name</td>
+                <td>
+                    {
+                    <button @onclick="(() => DeleteGenre(g.genreID))">
+                        Delete
+                    </button>
+                    }
+                </td>
+                }
+            </tr>
+        }
+        }
+    </tbody>
+    }
+</table>
+
+
+@code
+{
+    private GenereDB _db = new GenereDB();
+    private List<Models.Genre> genres = new List<Models.Genre>();
+
+    private string search = "";
+    private string newGenreName = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadGenres();
+    }
+
+    private async Task LoadGenres()
+    {
+        genres = await _db.GetAllAsync();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            genres = genres
+                .Where(g => g.name.ToLower().Contains(search.ToLower()))
+                .ToList();
+        }
+    }
+
+    private async Task AddGenre()
+    {
+        if (string.IsNullOrWhiteSpace(newGenreName))
+            return;
+
+        Models.Genre genre = new Models.Genre(0, newGenreName);
+        await _db.InsertGenre(genre);
+
+        newGenreName = "";
+        await LoadGenres();
+    }
+
+    private async Task DeleteGenre(int id)
+    {
+        await _db.DeleteGenre(id);
+        await LoadGenres();
+    }
+}
