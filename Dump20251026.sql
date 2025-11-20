@@ -126,6 +126,32 @@ LOCK TABLES `ratings` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `song_genres`
+--
+
+DROP TABLE IF EXISTS `song_genres`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `song_genres` (
+  `songid` int NOT NULL,
+  `genreid` int NOT NULL,
+  PRIMARY KEY (`songid`,`genreid`),
+  KEY `genreid` (`genreid`),
+  CONSTRAINT `song_genres_ibfk_1` FOREIGN KEY (`songid`) REFERENCES `songs` (`songid`),
+  CONSTRAINT `song_genres_ibfk_2` FOREIGN KEY (`genreid`) REFERENCES `genres` (`genreid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `song_genres`
+--
+
+LOCK TABLES `song_genres` WRITE;
+/*!40000 ALTER TABLE `song_genres` DISABLE KEYS */;
+/*!40000 ALTER TABLE `song_genres` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `songs`
 --
 
@@ -170,10 +196,11 @@ CREATE TABLE `users` (
   `email` varchar(255) NOT NULL,
   `profilepicture` longblob,
   `IsAdmin` int NOT NULL DEFAULT '0',
+  `ResetCode` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`userid`),
   UNIQUE KEY `username` (`username`),
   UNIQUE KEY `email` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -182,7 +209,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'AuroraAdmin','admin123','admin@aurora.com',NULL,0),(2,'MelodyMaker','pass123','melody@example.com',NULL,0),(3,'BeatLover','musicpass','beatlover@example.com',NULL,0),(4,'HarmonyQueen','harmony99','harmony@example.com',NULL,0),(5,'admin','1111','admin@test.com',NULL,1);
+INSERT INTO `users` VALUES (1,'1','1','1',NULL,0,NULL);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -195,4 +222,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-10-26  9:41:36
+-- Dump completed on 2025-11-20 11:56:29
