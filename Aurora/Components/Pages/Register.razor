@@ -3,7 +3,6 @@
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @inject NavigationManager NavManager
 @inject ProtectedSessionStorage MySession
-
 @using DBL
 @using Models
 
@@ -12,148 +11,285 @@
         margin: 0;
         padding: 0;
         font-family: 'Segoe UI', sans-serif;
-        background: radial-gradient(circle at 20% 20%, #151a2f, #090b16 70%);
+        background: radial-gradient(circle at 30% 20%, #0a0f24, #04050c 80%);
         height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
         overflow: hidden;
+        perspective: 1600px;
     }
 
         body::before {
             content: "";
             position: absolute;
-            width: 150%;
-            height: 150%;
-            top: -25%;
-            left: -25%;
-            background: linear-gradient(60deg, #00bfff33, #ff00ff22, #00ffcc33);
-            filter: blur(120px);
-            animation: auroraFlow 15s ease-in-out infinite alternate;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 45deg, #00bfff33, #a855ff22, #00ffcc33, #00bfff33);
+            filter: blur(160px);
+            animation: nebulaFlow 22s linear infinite;
             z-index: 0;
         }
 
-    @@keyframes auroraFlow {
-        0% {
-            transform: translate(-10%, -10%) rotate(0deg);
-        }
+    @@keyframes nebulaFlow {
+        0%
 
-        100% {
-            transform: translate(10%, 10%) rotate(360deg);
-        }
+    {
+        transform: rotate(0deg) scale(1);
+    }
+
+    100% {
+        transform: rotate(360deg) scale(1);
+    }
+
+    }
+
+    .floating-crystal {
+        position: absolute;
+        width: 260px;
+        height: 260px;
+        background: radial-gradient(circle, #1ddfff33, transparent 70%);
+        border-radius: 50%;
+        filter: blur(70px);
+        animation: crystalFloat 11s ease-in-out infinite;
+        z-index: 0;
+    }
+
+    @@keyframes crystalFloat {
+        0%
+
+    {
+        transform: translate(-140px, -120px) scale(1);
+    }
+
+    50% {
+        transform: translate(160px, 140px) scale(1.3);
+    }
+
+    100% {
+        transform: translate(-140px, -120px) scale(1);
+    }
+
     }
 
     .register-container {
         position: relative;
-        z-index: 2;
+        z-index: 3;
+        width: 420px;
+        padding: 55px 40px;
+        border-radius: 22px;
         background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(25px);
-        border-radius: 20px;
-        padding: 40px;
-        width: 380px;
-        box-shadow: 0 0 30px rgba(0, 255, 255, 0.25);
+        backdrop-filter: blur(30px);
+        box-shadow: 0 0 55px rgba(0, 255, 255, 0.25);
         text-align: center;
-        animation: fadeIn 1s ease forwards;
+        transform-style: preserve-3d;
+        animation: containerLift 1.4s cubic-bezier(.19,1,.22,1);
     }
 
-    @@keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: scale(0.95);
-        }
+    @@keyframes containerLift {
+        0%
 
-        to {
-            opacity: 1;
-            transform: scale(1);
-        }
+    {
+        opacity: 0;
+        transform: translateY(40px) rotateX(30deg);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0) rotateX(0deg);
+    }
+
+    }
+
+    .register-container::after {
+        content: "";
+        position: absolute;
+        width: 160%;
+        height: 160%;
+        top: -30%;
+        left: -30%;
+        background: radial-gradient(circle, rgba(0,255,255,0.1), transparent 70%);
+        animation: holoSpin 20s linear infinite;
+        pointer-events: none;
+    }
+
+    @@keyframes holoSpin {
+        from
+
+    {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+
     }
 
     .aurora-title {
-        color: #b3e8ff;
-        font-size: 2.3em;
-        margin-bottom: 10px;
-        letter-spacing: 2px;
-        text-shadow: 0 0 15px #00ffff55;
+        font-size: 2.6em;
+        font-weight: 900;
+        background: linear-gradient(90deg, #00bfff, #3fffd9, #7dffff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 25px #00d9ff55;
+        letter-spacing: 3px;
+        animation: titlePulse 3.5s ease-in-out infinite alternate;
+    }
+
+    @@keyframes titlePulse {
+        0%
+
+    {
+        filter: drop-shadow(0 0 8px #00ffff44);
+    }
+
+    100% {
+        filter: drop-shadow(0 0 22px #00ffffaa);
+    }
+
     }
 
     .login-subtitle {
-        color: #aaa;
-        margin-bottom: 30px;
-        font-size: 1.1em;
+        color: #bcd0e8;
+        margin-bottom: 35px;
+        font-size: 1.05em;
     }
 
     .register-input {
         width: 100%;
-        padding: 12px;
-        margin-bottom: 15px;
+        padding: 13px;
+        margin-bottom: 18px;
         border: none;
-        border-radius: 10px;
+        border-radius: 12px;
         background: rgba(255, 255, 255, 0.1);
         color: white;
         outline: none;
-        transition: 0.3s;
+        font-size: 1.05em;
+        transition: 0.25s ease;
+        box-shadow: inset 0 0 0 rgba(0, 255, 255, 0);
+        backdrop-filter: blur(6px);
     }
 
         .register-input:focus {
             background: rgba(255, 255, 255, 0.2);
-            box-shadow: 0 0 10px #00ffff55;
+            box-shadow: 0 0 15px #00ffff88;
+            transform: scale(1.03);
+        }
+
+        .register-input::placeholder {
+            color: #d0e7ff99;
+        }
+
+        .register-input:focus::placeholder {
+            color: #ffffffbb;
         }
 
     .login-btn {
         width: 100%;
-        padding: 12px;
+        padding: 14px;
+        margin-top: 5px;
         border: none;
-        border-radius: 10px;
-        background: linear-gradient(90deg, #00bfff, #00ffcc);
-        color: #0d0f1c;
-        font-weight: bold;
+        border-radius: 14px;
+        background: linear-gradient(120deg, #00bfff, #00ffd0, #33ffff);
+        background-size: 240%;
+        color: #07121d;
+        font-weight: 800;
+        font-size: 1.1em;
         cursor: pointer;
-        transition: 0.3s;
-        font-size: 1.05em;
+        transition: 0.3s ease;
+        box-shadow: 0 0 25px #00ffff66;
     }
 
         .login-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 20px #00ffff88;
+            transform: scale(1.07) translateY(-3px);
+            background-position: 100%;
+            box-shadow: 0 0 40px #00ffffaa;
         }
 
     .login-links {
-        margin-top: 25px;
-        font-size: 0.9em;
-        color: #aaa;
+        margin-top: 28px;
+        font-size: 0.95em;
+        color: #a8d9ff;
     }
 
         .login-links a {
-            color: #77eaff;
+            color: #7df9ff;
             text-decoration: none;
-            transition: 0.3s;
+            font-weight: 600;
+            transition: 0.25s ease;
         }
 
             .login-links a:hover {
                 text-shadow: 0 0 10px #00ffff;
+                letter-spacing: 1px;
             }
 
     .error-msg {
-        color: #ff6b6b;
-        margin-top: 15px;
-        font-size: 0.9em;
-        animation: shake 0.3s ease;
+        color: #ff7070;
+        margin-top: 18px;
+        font-size: 0.92em;
+        animation: errShake 0.35s ease;
     }
 
-    @@keyframes shake {
-        0%, 100% {
-            transform: translateX(0);
-        }
+    @@keyframes errShake {
+        0%
 
-        25% {
-            transform: translateX(-5px);
-        }
+    {
+        transform: translateX(0);
+    }
 
-        75% {
-            transform: translateX(5px);
-        }
+    25% {
+        transform: translateX(-6px);
+    }
+
+    50% {
+        transform: translateX(6px);
+    }
+
+    75% {
+        transform: translateX(-6px);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+
+    }
+
+    .shard {
+        position: absolute;
+        width: 120px;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, #00ffff66, transparent);
+        top: -20px;
+        left: 50%;
+        transform: translateX(-50%) rotate(20deg);
+        animation: shardDrift 9s infinite ease-in-out;
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
+    @@keyframes shardDrift {
+        0%
+
+    {
+        transform: translate(-50%, 0) rotate(20deg);
+    }
+
+    50% {
+        transform: translate(-50%, 50px) rotate(25deg);
+    }
+
+    100% {
+        transform: translate(-50%, 0) rotate(20deg);
+    }
+
     }
 </style>
+
+<div class="floating-crystal"></div>
+<div class="shard"></div>
 
 <div class="register-container">
     <h1 class="aurora-title">Aurora</h1>
@@ -176,6 +312,38 @@
     </div>
 </div>
 
+<script>
+    for (let i = 0; i < 35; i++)
+    {
+        const s = document.createElement("div");
+        s.style.position = "absolute";
+        s.style.width = "2px";
+        s.style.height = "2px";
+        s.style.background = "white";
+        s.style.borderRadius = "50%";
+        s.style.opacity = "0.5";
+        s.style.left = Math.random() * 100 + "%";
+        s.style.top = Math.random() * 100 + "%";
+        s.style.animation = "starFloat " + (4 + Math.random() * 8) + "s linear infinite";
+        document.body.appendChild(s);
+    }
+</script>
+
+<style>
+    @@keyframes starFloat {
+        from
+
+    {
+        transform: translateY(0);
+    }
+
+    to {
+        transform: translateY(120vh);
+    }
+
+    }
+</style>
+
 @code {
     string username = string.Empty;
     string email = string.Empty;
@@ -187,7 +355,8 @@
         try
         {
             ListenerDB db = new ListenerDB();
-            Listener? listener = await db.InsertGetObjAsync(new Listener(this.username, this.email), this.password);
+            Listener listener = await db.InsertGetObjAsync(new Listener(this.username, this.email), this.password);
+
             if (listener != null)
             {
                 await MySession.SetAsync("user", listener);
@@ -200,7 +369,7 @@
         }
         catch (Exception ex)
         {
-            errorMessage = $"An error occurred: {ex.Message}";
+            errorMessage = "An error occurred: " + ex.Message;
         }
     }
 }
