@@ -1,5 +1,118 @@
-﻿<h3>Songs</h3>
+﻿@page "/songs"
+@using DBL
+@using Models
+@inject IWebHostEnvironment Env
 
-@code {
+<h2>User Song Upload & Listen</h2>
 
+<input type="text" @bind="searchQuery" placeholder="Search songs..." />
+<button @onclick="SearchSongs">Search</button>
+
+<hr />
+
+<InputFile OnChange="HandleFileUpload" accept=".mp3" />
+<input @bind="title" placeholder="Song title" />
+<input @bind="artist" placeholder="Artist name" />
+<input @bind="genreID" placeholder="Genre ID" type="number" />
+<input @bind="duration" placeholder="Duration (seconds)" type="number" />
+<button @onclick="SaveSong">Save Song</button>
+
+<hr />
+
+@if (songs.Count > 0)
+{
+    <table>
+        {
+        <thead>
+            {
+            <tr>
+                {
+                <th>ID</th>
+                <th>Title</th>
+                <th>Artist</th>
+                <th>Duration</th>
+                <th>Play</th>
+                }
+            </tr>
+            }
+        </thead>
+        <tbody>
+            {
+            @foreach (var s in songs)
+            {
+                <tr>
+                    {
+                    <td>@s.songID</td>
+                    <td>@s.title</td>
+                    <td>@s.artist</td>
+                    <td>@s.duration sec</td>
+                    <td>
+                        {
+                        <audio controls src="@s.filePath"></audio>
+                        }
+                    </td>
+                    }
+                </tr>
+            }
+            }
+        </tbody>
+    </table>
+}
+}
+
+@code
+{
+    private SongDB db = new SongDB();
+    private List<Song> songs = new List<Song>();
+
+    private string searchQuery = "";
+    private string title = "";
+    private string artist = "";
+    private int genreID = 0;
+    private int duration = 0;
+    private IBrowserFile? file;
+
+    private async Task HandleFileUpload(InputFileChangeEventArgs e)
+    {
+        file = e.File;
+    }
+
+    private async Task SaveSong()
+    {
+        if (file == null)
+            return;
+
+        string uploadsFolder = Path.Combine(Env.WebRootPath, "uploads");
+        if (!Directory.Exists(uploadsFolder))
+            Directory.CreateDirectory(uploadsFolder);
+
+        string fileName = $"{Guid.NewGuid()}_{file.Name}";
+        string fullPath = Path.Combine(uploadsFolder, fileName);
+
+        await using FileStream fs = new FileStream(fullPath, FileMode.Create);
+        await file.OpenReadStream().CopyToAsync(fs);
+
+        string relativePath = $"/uploads/{fileName}";
+
+        Song song = new Song(0, title, artist, genreID, duration, relativePath);
+        await db.InsertSongAsync(song);
+
+        title = "";
+        artist = "";
+        duration = 0;
+        genreID = 0;
+        file = null;
+
+        songs = await db.GetAllAsync();
+    }
+
+    private async Task SearchSongs()
+    {
+        songs = await db.SearchAsync(searchQuery);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        songs = await db.GetAllAsync();
+    }
 }

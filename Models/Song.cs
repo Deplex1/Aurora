@@ -1,4 +1,6 @@
-﻿namespace Models
+﻿using System;
+
+namespace Models
 {
     public class Song
     {
@@ -6,20 +8,21 @@
         public string title { get; set; }
         public string artist { get; set; }
         public int genreID { get; set; }
+        public int duration { get; set; } // duration in seconds
         public string filePath { get; set; }
 
-        // Duration in seconds
-        public int duration { get; set; }
-
-        // New constructor
-        public Song(int songID, string title, string artist, int genreID, string filePath, int duration)
+        // Constructor
+        public Song(int songID, string title, string artist, int genreID, int duration, string filePath)
         {
             this.songID = songID;
             this.title = title;
             this.artist = artist;
             this.genreID = genreID;
-            this.filePath = filePath;
             this.duration = duration;
+            this.filePath = filePath;
         }
+
+        // Empty constructor for ORM/blazor binding if needed
+        public Song() { }
     }
 }
