@@ -5,442 +5,154 @@
 @inject NavigationManager NavManager
 @inject ProtectedSessionStorage MySession
 
+<!-- Global full CSS in same file, no external dependencies -->
 <style>
-    body {
+
+    body
+    {
         margin: 0;
         padding: 0;
-        background: radial-gradient(circle at 30% 30%, #0a0f24, #03040a 80%);
         height: 100vh;
+        width: 100vw;
+        font-family: "Segoe UI", sans-serif;
         display: flex;
         justify-content: center;
-        align-items: center;
-        color: #fff;
-        font-family: "Segoe UI", sans-serif;
-        overflow: hidden;
+        align-items: flex-start;
+        background: #0a0f24;
+        overflow-x: hidden;
     }
 
-        body::before {
-            content: "";
-            position: absolute;
-            width: 200%;
-            height: 200%;
-            background: conic-gradient(from 90deg, #4ac8ff33, #a855ff33, #00ffaa33, #4ac8ff33);
-            filter: blur(160px);
-            animation: galaxyFlow 25s infinite linear;
-            z-index: 0;
-        }
-
-    @@keyframes galaxyFlow {
-        0% {
-            transform: rotate(0deg);
-        }
-
-        100% {
-            transform: rotate(360deg);
-        }
+    body::before
+    {
+        content: "";
+        position: fixed;
+        width: 250vw;
+        height: 250vh;
+        top: -60%;
+        left: -60%;
+        background: conic-gradient(
+            from 90deg,
+            rgba(74,200,255,0.25),
+            rgba(168,85,255,0.2),
+            rgba(0,255,170,0.25),
+            rgba(74,200,255,0.25)
+        );
+        filter: blur(180px);
+        animation: galaxyRotate 40s infinite linear;
+        z-index: 0;
     }
 
-    .home-container {
+    @keyframes galaxyRotate
+    {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    /* Main wrapper, prevents Blazor from breaking body */
+    .page-root
+    {
         position: relative;
         z-index: 2;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+
+    .home-container
+    {
         width: 90%;
-        max-width: 1100px;
+        max-width: 900px;
+        margin-top: 60px;
+        padding: 20px;
         display: flex;
         flex-direction: column;
-        gap: 40px;
-        padding-top: 40px;
+        gap: 30px;
     }
 
-    .welcome-box {
-        background: rgba(255, 255, 255, 0.07);
-        backdrop-filter: blur(25px);
-        border-radius: 25px;
-        padding: 35px;
-        box-shadow: 0 0 40px rgba(0, 200, 255, 0.2);
-        animation: fadeIn 1s ease-out forwards;
-        text-align: center;
+    .home-title
+    {
+        font-size: 42px;
+        font-weight: 700;
+        color: #c5f6ff;
+        letter-spacing: 3px;
+        margin-bottom: 10px;
+        text-shadow: 0 0 20px rgba(0,255,255,0.3);
     }
 
-    @@keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .welcome-box span {
-        color: #38e7ff;
-        font-weight: bold;
-    }
-
-    .section-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 25px;
-    }
-
-    .galaxy-card {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 20px;
-        padding: 25px;
-        backdrop-filter: blur(20px);
-        transition: 0.3s ease;
-        box-shadow: 0 0 25px rgba(255, 255, 255, 0.08);
-        position: relative;
-        overflow: hidden;
-    }
-
-        .galaxy-card:hover {
-            transform: translateY(-5px) scale(1.01);
-            box-shadow: 0 0 35px rgba(0, 255, 255, 0.25);
-        }
-
-        /* subtle rotating highlight aura */
-        .galaxy-card::before {
-            content: "";
-            position: absolute;
-            width: 160%;
-            height: 160%;
-            top: -30%;
-            left: -30%;
-            background: radial-gradient(circle, rgba(0,255,255,0.15), transparent 60%);
-            animation: holoSpin 18s linear infinite;
-            pointer-events: none;
-        }
-
-    @@keyframes holoSpin {
-        from {
-            transform: rotate(0deg);
-        }
-
-        to {
-            transform: rotate(360deg);
-        }
-    }
-
-    .section-title {
-        font-size: 1.6rem;
-        margin-bottom: 15px;
-        font-weight: 600;
-        color: #a9eaff;
-    }
-
-    .home-buttons {
-        margin-top: 25px;
+    .search-box
+    {
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        align-items: center;
     }
 
-    .home-btn {
-        background: linear-gradient(90deg, #00bfff, #00ffcc);
-        border: none;
+    .search-bar
+    {
+        width: 100%;
+        padding: 14px 18px;
         border-radius: 12px;
-        padding: 12px;
-        font-size: 1em;
-        font-weight: 600;
-        color: #111;
-        cursor: pointer;
+        border: none;
+        outline: none;
+        font-size: 18px;
+        background: rgba(255,255,255,0.1);
+        color: #fff;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 0 15px rgba(0,255,255,0.2);
         transition: 0.3s ease;
     }
 
-        .home-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 20px #00ffff99;
-        }
-
-    .logout-btn {
-        background: rgba(255, 70, 70, 0.8);
-        color: white;
-    }
-
-        .logout-btn:hover {
-            box-shadow: 0 0 20px rgba(255, 50, 50, 0.8);
-        }
-
-    /* ============================================= */
-    /* EXTRA POLISH CSS (only adding, no changing)   */
-    /* ============================================= */
-
-    /* Frosted glass glints */
-    .galaxy-card:after {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 50%;
-        height: 100%;
-        background: linear-gradient(120deg, transparent, rgba(255,255,255,0.18), transparent);
-        transform: skewX(-25deg);
-        animation: cardShine 6s infinite ease-in-out;
-    }
-
-    @@keyframes cardShine {
-        0% {
-            left: -120%;
-        }
-
-        60% {
-            left: 140%;
-        }
-
-        100% {
-            left: 140%;
-        }
-    }
-
-    /* Micro hover tilt */
-    .galaxy-card:hover {
-        transform: translateY(-6px) rotateX(3deg);
-    }
-</style>
-
-<div class="home-container">
-
-    <div class="welcome-box">
-        @if (listener != null)
-        {
-            <h1>Welcome back, <span>@listener.username</span></h1>
-            <p>Exploring cosmic beats and playlists beyond the stars.</p>
-        }
-        else
-        {
-            <h1>Loading...</h1>
-        }
-    </div>
-
-    @if (listener != null)
+    .search-bar:focus
     {
-        <div class="section-grid">
-            <div class="galaxy-card">
-                <div class="section-title">Your Playlists</div>
-                <p>Browse and manage your playlists.</p>
-                <button class="home-btn" @onclick="GoToPlaylists">Open Playlists</button>
-            </div>
-
-            <div class="galaxy-card">
-                <div class="section-title">Top Songs</div>
-                <p>Check out trending tracks across the universe.</p>
-                <button class="home-btn" @onclick="GoToSongs">View Songs</button>
-            </div>
-
-            <div class="galaxy-card">
-                <div class="section-title">Profile Settings</div>
-                <p>Customize your personal cosmic identity.</p>
-                <button class="home-btn" @onclick="GoToUpdateProfile">Edit Profile</button>
-            </div>
-
-            @if (listener.IsAdmin == 1)
-            {
-                <div class="galaxy-card">
-                    <div class="section-title">Admin Controls</div>
-                    <p>Manage users and system settings.</p>
-                    <button class="home-btn" @onclick="GoToAdminPanel">Admin Panel</button>
-                </div>
-            }
-        </div>
-
-        <div style="margin-top: 20px; text-align:center;">
-            <button class="home-btn logout-btn" @onclick="Logout">Logout</button>
-        </div>
+        background: rgba(255,255,255,0.18);
+        box-shadow: 0 0 30px rgba(0,255,255,0.35);
+        transform: scale(1.01);
     }
 
-</div>
-
-@code {
-    private Listener listener;
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    .trending-placeholder
     {
-        if (!firstRender)
-        {
-            return;
-        }
-
-        var result = await MySession.GetAsync<Listener>("user");
-        if (result.Success)
-        {
-            listener = new Listener(result.Value);
-            StateHasChanged();
-        }
-        else
-        {
-            NavManager.NavigateTo("/login");
-        }
+        margin-top: 12px;
+        font-size: 15px;
+        color: rgba(197,246,255,0.5);
     }
 
-    private void GoToPlaylists()
+    .section-card
     {
-        NavManager.NavigateTo("/playlists");
+        background: rgba(255,255,255,0.05);
+        border-radius: 18px;
+        padding: 28px;
+        backdrop-filter: blur(16px);
+        box-shadow: 0 0 25px rgba(255,255,255,0.07);
+        transform-style: preserve-3d;
+        transition: 0.4s ease;
     }
 
-    private void GoToSongs()
+    .section-card:hover
     {
-        NavManager.NavigateTo("/songs");
+        transform: perspective(700px) rotateX(4deg) rotateY(-2deg) translateY(-6px);
+        box-shadow: 0 0 40px rgba(0,255,255,0.2);
     }
 
-    private void GoToUpdateProfile()
+    .section-card-title
     {
-        NavManager.NavigateTo("/updateprofile");
+        font-size: 24px;
+        font-weight: 600;
+        text-shadow: 0 0 10px rgba(0,255,255,0.2);
+        margin-bottom: 3px;
+        color: #38f3ff;
     }
 
-    private void GoToAdminPanel()
+    .section-card-text
     {
-        NavManager.NavigateTo("/admin/users");
+        font-size: 15px;
+        margin-top: 8px;
+        color: #b8d1d6;
     }
 
-    private async Task Logout()
+    .mp3-player-note
     {
-        await MySession.DeleteAsync("user");
-        NavManager.NavigateTo("/login", true);
-    }
-}
-
-<!-- JavaScript: all comments in English, explain each line -->
-<script>
-    // Create a lightweight helper to create one star element.
-    // This function encapsulates DOM creation and randomization.
-    function createStar() {
-        // Create a div that will act as a single floating star.
-        const star = document.createElement("div");
-
-        // Add a CSS class so the star gets our styles defined in the CSS block below.
-        star.classList.add("floating-star");
-
-        // Randomize horizontal position across the viewport (0% - 100%).
-        // This places stars at various left offsets.
-        star.style.left = Math.random() * 100 + "%";
-
-        // Randomize vertical starting position slightly above viewport so they float in.
-        // Negative values push initial position higher, creating a falling effect.
-        star.style.top = (-5 - Math.random() * 10) + "vh";
-
-        // Give each star a random animation duration to create depth (faster and slower stars).
-        // Using a range of 4s to 10s creates visual variety.
-        star.style.animationDuration = (4 + Math.random() * 6) + "s";
-
-        // Make some stars larger to imply different star sizes / distances.
-        // We choose a scale between 0.6 and 1.6.
-        const size = 0.6 + Math.random() * 1.0;
-        star.style.width = (2 * size) + "px";
-        star.style.height = (2 * size) + "px";
-
-        // Slightly vary opacity to add depth.
-        star.style.opacity = (0.3 + Math.random() * 0.7).toString();
-
-        // Return the configured DOM element to the caller.
-        return star;
+        font-size: 14px;
+        opacity: 0.5;
+        margin-top: 15px;
     }
 
-    // Spawn `amount` stars and append them to the body.
-    // This makes the starfield declaratively generated at runtime.
-    function spawnStars(amount) {
-        // Loop `amount` times to generate multiple star DOM nodes.
-        for (let i = 0; i < amount; i++) {
-            // Create one star element using helper above.
-            const s = createStar();
-
-            // Append the star element directly to the document body so background animation plays behind content.
-            document.body.appendChild(s);
-
-            // After the star animation finishes we remove it from DOM to avoid accumulating nodes.
-            // `animationend` ensures cleanup when the CSS animation completes for that element.
-            s.addEventListener("animationend", () => {
-                // Safety: check node still exists then remove it.
-                if (s.parentNode) s.parentNode.removeChild(s);
-            });
-        }
-    }
-
-    // Create a continuous background starfield by periodically spawning batches.
-    // This avoids creating all stars at once and creates a streaming parallax feel.
-    function startStarField() {
-        // Immediately spawn an initial set so user sees stars right away.
-        spawnStars(20);
-
-        // Every 2.5 seconds spawn a few more stars to keep the field populated.
-        // Use setInterval to continuously replenish the starfield.
-        setInterval(() => {
-            spawnStars(8);
-        }, 2500);
-    }
-
-    // Decorative subtle parallax tilt on mouse move within the main home container.
-    // This function sets up an event listener and updates CSS variables for smooth transforms.
-    function enableParallaxTilt() {
-        // Query for the container we want to apply tilt to.
-        const container = document.querySelector(".home-container");
-
-        // If container is not found, exit early to avoid JS errors.
-        if (!container) return;
-
-        // On mouse move inside the container calculate tilt based on pointer position.
-        container.addEventListener("mousemove", function (ev) {
-            // Get the bounding rectangle to compute relative pointer position.
-            const rect = container.getBoundingClientRect();
-
-            // Calculate normalized pointer X within container (-0.5 .. +0.5).
-            const x = (ev.clientX - rect.left) / rect.width - 0.5;
-
-            // Calculate normalized pointer Y within container (-0.5 .. +0.5).
-            const y = (ev.clientY - rect.top) / rect.height - 0.5;
-
-            // Multiply normalized values to get small rotation angles.
-            // We flip sign on X so movement feels natural.
-            const rotateX = (y * 6).toFixed(2);
-            const rotateY = (-x * 10).toFixed(2);
-
-            // Apply a transform to the container for the subtle 3D tilt.
-            // We use perspective to give it depth and slight translationZ on hover feeling.
-            container.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-        });
-
-        // Reset transform when the pointer leaves the container.
-        container.addEventListener("mouseleave", function () {
-            container.style.transform = "";
-        });
-    }
-
-    // Safe DOM-ready handler: wait for the page to fully load before running visual scripts.
-    // Using load ensures images, fonts and Blazor framework are ready.
-    window.addEventListener("load", function () {
-        // Start background starfield streaming.
-        startStarField();
-
-        // Enable the subtle parallax tilt effect.
-        enableParallaxTilt();
-    });
-</script>
-
-<style>
-    /* floating stars styling used by the JS-created nodes */
-    .floating-star {
-        position: fixed;
-        z-index: 1;
-        border-radius: 50%;
-        background: radial-gradient(circle, #ffffff, #cfefff);
-        pointer-events: none;
-        transform: translateY(0);
-        /* the `starFloat` animation moves each star vertically across viewport */
-        animation-name: starFloat;
-        animation-timing-function: linear;
-        animation-iteration-count: 1;
-    }
-
-    @@keyframes starFloat {
-        from {
-            transform: translateY(0);
-            opacity: 1;
-        }
-
-        to {
-            transform: translateY(120vh);
-            opacity: 0;
-        }
-    }
 </style>
