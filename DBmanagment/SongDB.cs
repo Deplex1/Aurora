@@ -1,91 +1,92 @@
 ﻿using Models;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Linq;
 
 namespace DBL
 {
-    public class SongDB : BaseDB<Song>
+    public class SongsDB : BaseDB<Song>
     {
-        // Return target table name
-        protected override string GetTableName()
-        {
-            return "songs";
-        }
+        protected override string GetTableName() => "songs";
+        protected override string GetPrimaryKeyName() => "songid";
 
-        // Return primary key column name
-        protected override string GetPrimaryKeyName()
-        {
-            return "songid";
-        }
-
-        // Create a Song model from a row result
-        protected async override Task<Song> CreateModelAsync(object[] row)
+        protected override async Task<Song> CreateModelAsync(object[] row)
         {
             return new Song(
-                int.Parse(row[0].ToString()),
-                row[1].ToString(),
-                row[2].ToString(),
-                int.Parse(row[3].ToString()),
-                int.Parse(row[4].ToString()),
-                row[5].ToString()
+                int.Parse(row[0].ToString()),                 // songid
+                row[1].ToString(),                            // title
+                row[2].ToString(),                            // artist
+                int.Parse(row[3].ToString()),                 // genreid
+                int.Parse(row[4].ToString()),                 // duration
+                row[5].ToString()                             // filePath
             );
         }
 
-        // Insert a song and return inserted object
-        public async Task<Song?> InsertSongAsync(Song s)
-        {
-            Dictionary<string, object> values = new Dictionary<string, object>()
-            {
-                { "title", s.title },
-                { "artist", s.artist },
-                { "genreid", s.genreID },
-                { "duration", s.duration },
-                { "filepath", s.filePath }
-            };
-
-            Song result = await base.InsertGetObjAsync(values);
-            return result != null ? result : null;
-        }
-
-        // Get all songs
+        // 🔹 Get all songs
         public async Task<List<Song>> GetAllAsync()
         {
             return await SelectAllAsync();
         }
 
-        // Search songs by title or artist using LIKE
-        public async Task<List<Song>> SearchAsync(string query)
+        // 🔹 Get song by primary key
+        public async Task<Song?> GetSongByPkAsync(int songId)
         {
-            var all = await SelectAllAsync();
-
-            if (string.IsNullOrWhiteSpace(query))
-                return all;
-
-            string q = query.ToLower();
-
-            return all.Where(s =>
-                s.title.ToLower().Contains(q) ||
-                s.artist.ToLower().Contains(q)
-            ).ToList();
+            var p = new Dictionary<string, object> { { "songid", songId } };
+            var list = await SelectAllAsync(p);
+            return list.Count == 1 ? list[0] : null;
         }
 
-        // Delete a song by id
-        public async Task<int> DeleteSongAsync(int id)
+        // 🔹 Insert a new song
+        public async Task<Song> InsertGetObjAsync(Song song)
         {
-            Dictionary<string, object> filter = new Dictionary<string, object>()
+            var values = new Dictionary<string, object>
             {
-                { "songid", id }
+                { "title", song.Title },
+                { "artist", song.Artist },
+                { "genreid", song.GenreId },
+                { "duration", song.Duration },
+                { "filepath", song.FilePath }
             };
 
-            return await DeleteAsync(filter);
+            return await base.InsertGetObjAsync(values);
         }
 
-        // OPTIONAL: Get a single song by ID (manual filtering)
-        public async Task<Song?> GetByIdAsync(int id)
+        // 🔹 Update a song
+        public async Task<int> UpdateAsync(Song song)
         {
-            var all = await SelectAllAsync();
-            return all.FirstOrDefault(s => s.songID == id);
+            var values = new Dictionary<string, object>
+            {
+                { "title", song.Title },
+                { "artist", song.Artist },
+                { "genreid", song.GenreId },
+                { "duration", song.Duration },
+                { "filepath", song.FilePath }
+            };
+            var filter = new Dictionary<string, object> { { "songid", song.SongId } };
+
+            return await base.UpdateAsync(values, filter);
+        }
+
+        // 🔹 Delete a song
+        public async Task<int> DeleteAsync(Song song)
+        {
+            var filter = new Dictionary<string, object> { { "songid", song.SongId } };
+            return await base.DeleteAsync(filter);
+        }
+
+        // 🔹 Get songs by genre
+        public async Task<List<Song>> GetSongsByGenreAsync(int genreId)
+        {
+            var p = new Dictionary<string, object> { { "genreid", genreId } };
+            return await SelectAllAsync(p);
+        }
+
+        // 🔹 Search songs by title or artist
+        public async Task<List<Song>> SearchAsync(string query)
+        {
+            var sql = $"SELECT * FROM {GetTableName()} WHERE title LIKE @q OR artist LIKE @q";
+            var parameters = new Dictionary<string, object> { { "q", $"%{query}%" } };
+            return await SelectAllAsync(sql, parameters);
         }
     }
 }

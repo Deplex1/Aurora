@@ -5,52 +5,43 @@
 @inject NavigationManager NavManager
 @inject ProtectedSessionStorage MySession
 
-<!-- Global full CSS in same file, no external dependencies -->
 <style>
-
-    body
-    {
+    body {
         margin: 0;
         padding: 0;
-        height: 100vh;
-        width: 100vw;
         font-family: "Segoe UI", sans-serif;
-        display: flex;
-        justify-content: center;
-        align-items: flex-start;
         background: #0a0f24;
         overflow-x: hidden;
     }
 
-    body::before
+        /* Aurora background */
+        body::before {
+            content: "";
+            position: fixed;
+            width: 250vw;
+            height: 250vh;
+            top: -60%;
+            left: -60%;
+            background: conic-gradient( from 90deg, rgba(74,200,255,0.25), rgba(168,85,255,0.2), rgba(0,255,170,0.25), rgba(74,200,255,0.25) );
+            filter: blur(180px);
+            animation: galaxyRotate 40s infinite linear;
+            z-index: 0;
+        }
+
+    @@keyframes galaxyRotate {
+        from
+
     {
-        content: "";
-        position: fixed;
-        width: 250vw;
-        height: 250vh;
-        top: -60%;
-        left: -60%;
-        background: conic-gradient(
-            from 90deg,
-            rgba(74,200,255,0.25),
-            rgba(168,85,255,0.2),
-            rgba(0,255,170,0.25),
-            rgba(74,200,255,0.25)
-        );
-        filter: blur(180px);
-        animation: galaxyRotate 40s infinite linear;
-        z-index: 0;
+        transform: rotate(0deg);
     }
 
-    @keyframes galaxyRotate
-    {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
     }
 
-    /* Main wrapper, prevents Blazor from breaking body */
-    .page-root
-    {
+    }
+
+    .page-root {
         position: relative;
         z-index: 2;
         width: 100%;
@@ -58,36 +49,32 @@
         justify-content: center;
     }
 
-    .home-container
-    {
+    .home-container {
         width: 90%;
         max-width: 900px;
         margin-top: 60px;
         padding: 20px;
         display: flex;
         flex-direction: column;
-        gap: 30px;
+        gap: 25px;
     }
 
-    .home-title
-    {
+    .home-title {
         font-size: 42px;
         font-weight: 700;
         color: #c5f6ff;
         letter-spacing: 3px;
-        margin-bottom: 10px;
         text-shadow: 0 0 20px rgba(0,255,255,0.3);
+        text-align: center;
     }
 
-    .search-box
-    {
+    .search-box {
         display: flex;
         flex-direction: column;
         align-items: center;
     }
 
-    .search-bar
-    {
+    .search-bar {
         width: 100%;
         padding: 14px 18px;
         border-radius: 12px;
@@ -101,58 +88,243 @@
         transition: 0.3s ease;
     }
 
-    .search-bar:focus
-    {
-        background: rgba(255,255,255,0.18);
-        box-shadow: 0 0 30px rgba(0,255,255,0.35);
-        transform: scale(1.01);
+        .search-bar:focus {
+            background: rgba(255,255,255,0.18);
+            box-shadow: 0 0 30px rgba(0,255,255,0.35);
+            transform: scale(1.01);
+        }
+
+    .button-neon {
+        padding: 12px 24px;
+        margin-top: 10px;
+        border: none;
+        border-radius: 14px;
+        background: linear-gradient(120deg, #00bfff, #00ffcc, #33ffff);
+        color: #09121e;
+        font-weight: bold;
+        font-size: 1em;
+        cursor: pointer;
+        transition: 0.3s;
+        box-shadow: 0 0 25px rgba(0,255,255,0.5);
     }
 
-    .trending-placeholder
-    {
-        margin-top: 12px;
-        font-size: 15px;
-        color: rgba(197,246,255,0.5);
-    }
+        .button-neon:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 40px rgba(0,255,255,0.7), 0 0 60px rgba(168,85,255,0.5);
+        }
 
-    .section-card
-    {
+    /* Song card with aurora glow */
+    .section-card {
+        position: relative;
+        overflow: hidden;
         background: rgba(255,255,255,0.05);
         border-radius: 18px;
         padding: 28px;
         backdrop-filter: blur(16px);
         box-shadow: 0 0 25px rgba(255,255,255,0.07);
-        transform-style: preserve-3d;
         transition: 0.4s ease;
     }
 
-    .section-card:hover
+        .section-card::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient( rgba(0,255,170,0.15), rgba(74,200,255,0.1), rgba(168,85,255,0.1), rgba(0,255,170,0.15) );
+            filter: blur(60px);
+            animation: auroraSpin 25s linear infinite;
+            z-index: 0;
+        }
+
+    @@keyframes auroraSpin {
+        from
+
     {
-        transform: perspective(700px) rotateX(4deg) rotateY(-2deg) translateY(-6px);
-        box-shadow: 0 0 40px rgba(0,255,255,0.2);
+        transform: rotate(0deg);
     }
 
-    .section-card-title
-    {
+    to {
+        transform: rotate(360deg);
+    }
+
+    }
+
+    .section-card-title {
         font-size: 24px;
         font-weight: 600;
         text-shadow: 0 0 10px rgba(0,255,255,0.2);
         margin-bottom: 3px;
         color: #38f3ff;
+        position: relative;
+        z-index: 1;
     }
 
-    .section-card-text
-    {
+    .section-card-text {
         font-size: 15px;
         margin-top: 8px;
         color: #b8d1d6;
+        position: relative;
+        z-index: 1;
     }
 
-    .mp3-player-note
-    {
-        font-size: 14px;
-        opacity: 0.5;
-        margin-top: 15px;
+    .rating-star {
+        background: linear-gradient(90deg, #4ac8ff, #a855ff, #00ffaa);
+        color: #fff;
+        border: none;
+        border-radius: 50%;
+        width: 28px;
+        height: 28px;
+        margin-right: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: transform 0.2s, box-shadow 0.3s;
+        box-shadow: 0 0 5px rgba(74,200,255,0.5);
     }
 
+        .rating-star:hover,
+        .rating-star.selected {
+            transform: scale(1.2);
+            box-shadow: 0 0 20px rgba(74,200,255,0.7), 0 0 40px rgba(168,85,255,0.5);
+        }
 </style>
+
+@code {
+    private SongsDB songsDB = new SongsDB();
+    private RatingsDB ratingsDB = new RatingsDB();
+
+    private List<Song> allSongs = new List<Song>();
+    private string searchQuery = "";
+    private bool isLoggedIn = false;
+    private int? userId = null;
+    private Dictionary<int, int> userRatings = new Dictionary<int, int>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var sessionResult = await MySession.GetAsync<int>("UserId");
+            if (sessionResult.Success)
+            {
+                userId = sessionResult.Value;
+                isLoggedIn = true;
+            }
+        }
+        catch { }
+
+        await LoadSongsAsync();
+    }
+
+    private async Task LoadSongsAsync()
+    {
+        allSongs = await songsDB.GetAllAsync();
+        if (!string.IsNullOrWhiteSpace(searchQuery))
+        {
+            allSongs = allSongs.FindAll(s =>
+                s.Title.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                s.Artist.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (isLoggedIn && userId.HasValue)
+        {
+            userRatings.Clear();
+            foreach (var song in allSongs)
+            {
+                var rating = await ratingsDB.GetRatingByUserAndSongAsync(userId.Value, song.SongId);
+                if (rating != null) userRatings[song.SongId] = rating.Rate;
+            }
+        }
+    }
+
+    private async Task SearchAsync() => await LoadSongsAsync();
+
+    private async Task RateSongAsync(Song song, int rating)
+    {
+        if (!isLoggedIn || userId == null) return;
+
+        var existing = await ratingsDB.GetRatingByUserAndSongAsync(userId.Value, song.SongId);
+        if (existing != null)
+        {
+            existing.Rate = rating;
+            await ratingsDB.UpdateAsync(existing);
+        }
+        else
+        {
+            await ratingsDB.InsertGetObjAsync(new Rating
+            {
+                UserId = userId.Value,
+                SongId = song.SongId,
+                Rate = rating
+            });
+        }
+
+        userRatings[song.SongId] = rating;
+    }
+
+    private void UploadSong() => NavManager.NavigateTo("/upload");
+    private void Login() => NavManager.NavigateTo("/login");
+}
+
+<div class="page-root">
+    <div class="home-container">
+        <div class="home-title">Aurora Music</div>
+
+        <div class="search-box">
+            <input class="search-bar" placeholder="Search songs..." @bind="searchQuery" @bind:event="oninput" />
+            <button class="search-bar" style="margin-top:10px;" @onclick="SearchAsync">Search</button>
+        </div>
+
+        <div style="display:flex; justify-content: space-between; margin-top:10px;">
+            @if (isLoggedIn)
+            {
+                <button class="button-neon" @onclick="UploadSong">Add Song</button>
+            }
+            else
+            {
+                <button class="button-neon" @onclick="Login">Login</button>
+            }
+        </div>
+
+        <div class="section-card">
+            <div class="section-card-title">All Songs</div>
+            <div class="section-card-text">
+                @if (!allSongs.Any())
+                {
+                    <div>No songs available</div>
+                }
+                else
+                {
+                    <ul>
+                        @foreach (var song in allSongs)
+                        {
+                            <li style="margin-bottom:20px; position: relative; z-index:1;">
+                                <b>@song.Title</b> by @song.Artist
+                                <br />
+                                <audio controls style="margin-top:5px; width:100%;">
+                                    <source src="@song.FilePath" type="audio/mpeg" />
+                                    Your browser does not support the audio element.
+                                </audio>
+
+                                @if (isLoggedIn)
+                                {
+                                    <div style="margin-top:8px;">
+                                        Rate:
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            var selected = userRatings.ContainsKey(song.SongId) && userRatings[song.SongId] >= i;
+                                            <button class="rating-star @(selected ? "selected" : "")"
+                                                    @onclick="@(() => RateSongAsync(song, i))">
+                                                @i
+                                            </button>
+                                        }
+                                    </div>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+</div>
