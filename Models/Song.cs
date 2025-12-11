@@ -2,19 +2,19 @@
 {
     public int SongId { get; set; }
     public string Title { get; set; }
-    public string Artist { get; set; }   // new
-    public int GenreId { get; set; }
     public int Duration { get; set; }
     public string FilePath { get; set; }
+    public int UserId { get; set; }
+    public int GenreId { get; set; }
 
     public Song() { }
-    public Song(int songId, string title, string artist, int genreId, int duration, string filePath)
+    public Song(int songId, string title, int duration, string filePath, int userId, int genreId)
     {
         SongId = songId;
         Title = title;
-        Artist = artist;
-        GenreId = genreId;
         Duration = duration;
         FilePath = filePath;
+        UserId = userId;
+        GenreId = genreId;
     }
 }

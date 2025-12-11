@@ -1,7 +1,7 @@
 ﻿@page "/"
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using DBL
 @using Models
-@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @inject NavigationManager NavManager
 @inject ProtectedSessionStorage MySession
 
@@ -9,322 +9,514 @@
     body {
         margin: 0;
         padding: 0;
-        font-family: "Segoe UI", sans-serif;
-        background: #0a0f24;
-        overflow-x: hidden;
+        font-family: 'Segoe UI', sans-serif;
+        background: radial-gradient(circle at 20% 20%, #0c0f24, #02030a 80%);
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        overflow: hidden;
+        perspective: 1400px;
     }
 
-        /* Aurora background */
-        body::before {
-            content: "";
-            position: fixed;
-            width: 250vw;
-            height: 250vh;
-            top: -60%;
-            left: -60%;
-            background: conic-gradient( from 90deg, rgba(74,200,255,0.25), rgba(168,85,255,0.2), rgba(0,255,170,0.25), rgba(74,200,255,0.25) );
-            filter: blur(180px);
-            animation: galaxyRotate 40s infinite linear;
-            z-index: 0;
+    /* Enhanced Aurora Background */
+    body::before {
+        content: "";
+        position: absolute;
+        width: 200%;
+        height: 200%;
+        background: conic-gradient(from 120deg, #00bfff33, #ff00ff22, #00ffcc33, #00bfff33);
+        filter: blur(160px);
+        animation: auroraSpin 25s linear infinite;
+        z-index: 0;
+    }
+
+    @@keyframes auroraSpin {
+        0% {
+            transform: rotate(0deg) scale(1);
         }
-
-    @@keyframes galaxyRotate {
-        from
-
-    {
-        transform: rotate(0deg);
+        100% {
+            transform: rotate(360deg) scale(1.2);
+        }
     }
 
-    to {
-        transform: rotate(360deg);
+    /* Floating orbs with more depth */
+    body::after {
+        content: "";
+        position: absolute;
+        width: 450px;
+        height: 450px;
+        background: radial-gradient(circle, #00eaff44, transparent 70%);
+        border-radius: 50%;
+        filter: blur(90px);
+        animation: orbFloat 12s ease-in-out infinite;
+        z-index: 0;
+        top: 20%;
+        left: 20%;
     }
 
+    @@keyframes orbFloat {
+        0% {
+            transform: translate(-180px, -140px) scale(1);
+        }
+        50% {
+            transform: translate(160px, 120px) scale(1.25);
+        }
+        100% {
+            transform: translate(-180px, -140px) scale(1);
+        }
     }
 
-    .page-root {
+    .hero-section {
         position: relative;
         z-index: 2;
-        width: 100%;
-        display: flex;
-        justify-content: center;
-    }
-
-    .home-container {
-        width: 90%;
-        max-width: 900px;
-        margin-top: 60px;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 25px;
-    }
-
-    .home-title {
-        font-size: 42px;
-        font-weight: 700;
-        color: #c5f6ff;
-        letter-spacing: 3px;
-        text-shadow: 0 0 20px rgba(0,255,255,0.3);
         text-align: center;
+        max-width: 800px;
+        padding: 0 20px;
+        animation: fadeInUp 1.5s ease-out;
     }
 
-    .search-box {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .search-bar {
-        width: 100%;
-        padding: 14px 18px;
-        border-radius: 12px;
-        border: none;
-        outline: none;
-        font-size: 18px;
-        background: rgba(255,255,255,0.1);
-        color: #fff;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 0 15px rgba(0,255,255,0.2);
-        transition: 0.3s ease;
-    }
-
-        .search-bar:focus {
-            background: rgba(255,255,255,0.18);
-            box-shadow: 0 0 30px rgba(0,255,255,0.35);
-            transform: scale(1.01);
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
         }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 
-    .button-neon {
-        padding: 12px 24px;
+    .aurora-title {
+        font-size: 4.5em;
+        background: linear-gradient(90deg, #00bfff, #00ffcc, #33ffff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 900;
+        letter-spacing: 4px;
+        text-shadow: 0 0 30px #00eaff55;
+        animation: titleGlow 4s ease-in-out infinite alternate;
+        margin-bottom: 20px;
+    }
+
+    @@keyframes titleGlow {
+        0% {
+            filter: drop-shadow(0 0 8px #00d9ff55);
+        }
+        100% {
+            filter: drop-shadow(0 0 25px #00ffffaa);
+        }
+    }
+
+    .hero-subtitle {
+        font-size: 1.3em;
+        color: #b9cce8;
+        margin-bottom: 40px;
+        font-weight: 300;
+        text-shadow: 0 0 15px rgba(185, 204, 232, 0.3);
+        animation: subtitleFade 2s ease-out 0.5s both;
+    }
+
+    @@keyframes subtitleFade {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    .hero-description {
+        font-size: 1.1em;
+        color: #a8d9ff;
+        margin-bottom: 50px;
+        line-height: 1.6;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+        animation: descriptionSlide 2s ease-out 1s both;
+    }
+
+    @@keyframes descriptionSlide {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        flex-wrap: wrap;
+        animation: buttonsSlide 2s ease-out 1.5s both;
+    }
+
+    @@keyframes buttonsSlide {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .cta-button {
+        padding: 16px 32px;
+        border-radius: 50px;
+        border: none;
+        font-size: 1.1em;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .cta-button::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .cta-button:hover::before {
+        left: 100%;
+    }
+
+    .primary-btn {
+        background: linear-gradient(135deg, #00bfff, #00ffcc);
+        color: #09121e;
+        box-shadow: 0 0 30px rgba(0, 255, 170, 0.4);
+    }
+
+    .primary-btn:hover {
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 0 40px rgba(0, 255, 170, 0.6), 0 15px 35px rgba(0, 0, 0, 0.4);
+        background: linear-gradient(135deg, #33ccff, #33ffdd);
+    }
+
+    .secondary-btn {
+        background: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+    }
+
+    .secondary-btn:hover {
+        transform: translateY(-3px) scale(1.05);
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(0, 255, 170, 0.5);
+        box-shadow: 0 0 30px rgba(0, 255, 170, 0.3);
+    }
+
+    .login-section {
+        position: absolute;
+        top: 50%;
+        right: 5%;
+        transform: translateY(-50%);
+        z-index: 3;
+        animation: loginSlideIn 2s ease-out 2s both;
+    }
+
+    @@keyframes loginSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-50%) translateX(50px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(-50%) translateX(0);
+        }
+    }
+
+    .login-container {
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(25px);
+        border-radius: 22px;
+        padding: 35px 30px;
+        width: 320px;
+        text-align: center;
+        box-shadow: 0 0 55px rgba(0, 255, 255, 0.25);
+        transform-style: preserve-3d;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .login-container::before {
+        content: "";
+        position: absolute;
+        width: 180%;
+        height: 180%;
+        top: -40%;
+        left: -40%;
+        background: radial-gradient(circle, rgba(0,255,255,0.1), transparent 70%);
+        animation: holoSweep 18s linear infinite;
+        pointer-events: none;
+        border-radius: 50%;
+    }
+
+    @@keyframes holoSweep {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .login-title {
+        font-size: 1.8em;
+        color: #ffffff;
+        margin-bottom: 25px;
+        font-weight: 600;
+        text-shadow: 0 0 15px rgba(0, 255, 170, 0.3);
+    }
+
+    .login-input {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 20px;
+        border: none;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.12);
+        color: #fff;
+        outline: none;
+        font-size: 1em;
+        transition: 0.25s ease;
+        backdrop-filter: blur(6px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .login-input::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .login-input:focus {
+        background: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 0 15px rgba(0,255,170,0.4);
+        transform: scale(1.02);
+        border-color: rgba(0, 255, 170, 0.3);
+    }
+
+    .login-btn {
+        width: 100%;
+        padding: 14px;
         margin-top: 10px;
         border: none;
         border-radius: 14px;
-        background: linear-gradient(120deg, #00bfff, #00ffcc, #33ffff);
+        background: linear-gradient(135deg, #00bfff, #00ffcc);
         color: #09121e;
-        font-weight: bold;
-        font-size: 1em;
+        font-weight: 700;
+        font-size: 1.1em;
         cursor: pointer;
-        transition: 0.3s;
-        box-shadow: 0 0 25px rgba(0,255,255,0.5);
+        transition: 0.3s ease;
+        box-shadow: 0 0 25px rgba(0,255,170,0.4);
     }
 
-        .button-neon:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 40px rgba(0,255,255,0.7), 0 0 60px rgba(168,85,255,0.5);
+    .login-btn:hover {
+        transform: scale(1.05) translateY(-2px);
+        box-shadow: 0 0 35px rgba(0,255,170,0.6);
+    }
+
+    .login-links {
+        margin-top: 20px;
+        font-size: 0.9em;
+        color: #a8d9ff;
+    }
+
+    .login-links a {
+        color: #7df9ff;
+        text-decoration: none;
+        font-weight: 500;
+        transition: 0.25s;
+        margin: 0 5px;
+    }
+
+    .login-links a:hover {
+        text-shadow: 0 0 10px #00ffff;
+        letter-spacing: 1px;
+    }
+
+    .error-msg {
+        color: #ff7070;
+        margin-top: 15px;
+        font-size: 0.9em;
+        animation: errShake 0.35s ease;
+        text-shadow: 0 0 10px rgba(255, 112, 112, 0.5);
+    }
+
+    @@keyframes errShake {
+        0% {
+            transform: translateX(0);
         }
-
-    /* Song card with aurora glow */
-    .section-card {
-        position: relative;
-        overflow: hidden;
-        background: rgba(255,255,255,0.05);
-        border-radius: 18px;
-        padding: 28px;
-        backdrop-filter: blur(16px);
-        box-shadow: 0 0 25px rgba(255,255,255,0.07);
-        transition: 0.4s ease;
-    }
-
-        .section-card::before {
-            content: "";
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: conic-gradient( rgba(0,255,170,0.15), rgba(74,200,255,0.1), rgba(168,85,255,0.1), rgba(0,255,170,0.15) );
-            filter: blur(60px);
-            animation: auroraSpin 25s linear infinite;
-            z-index: 0;
+        25% {
+            transform: translateX(-5px);
         }
-
-    @@keyframes auroraSpin {
-        from
-
-    {
-        transform: rotate(0deg);
+        50% {
+            transform: translateX(5px);
+        }
+        75% {
+            transform: translateX(-5px);
+        }
+        100% {
+            transform: translateX(0);
+        }
     }
 
-    to {
-        transform: rotate(360deg);
-    }
-
-    }
-
-    .section-card-title {
-        font-size: 24px;
-        font-weight: 600;
-        text-shadow: 0 0 10px rgba(0,255,255,0.2);
-        margin-bottom: 3px;
-        color: #38f3ff;
-        position: relative;
-        z-index: 1;
-    }
-
-    .section-card-text {
-        font-size: 15px;
-        margin-top: 8px;
-        color: #b8d1d6;
-        position: relative;
-        z-index: 1;
-    }
-
-    .rating-star {
-        background: linear-gradient(90deg, #4ac8ff, #a855ff, #00ffaa);
-        color: #fff;
-        border: none;
+    /* Floating stars animation */
+    .star {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        background: white;
         border-radius: 50%;
-        width: 28px;
-        height: 28px;
-        margin-right: 4px;
-        cursor: pointer;
-        font-weight: bold;
-        transition: transform 0.2s, box-shadow 0.3s;
-        box-shadow: 0 0 5px rgba(74,200,255,0.5);
+        opacity: 0.6;
+        animation: starDrift 12s linear infinite;
+        pointer-events: none;
     }
 
-        .rating-star:hover,
-        .rating-star.selected {
-            transform: scale(1.2);
-            box-shadow: 0 0 20px rgba(74,200,255,0.7), 0 0 40px rgba(168,85,255,0.5);
+    @@keyframes starDrift {
+        from {
+            transform: translateY(-10vh);
         }
+        to {
+            transform: translateY(120vh);
+        }
+    }
+
+    /* Responsive design */
+    @@media (max-width: 768px) {
+        .hero-section {
+            padding: 0 10px;
+        }
+
+        .aurora-title {
+            font-size: 3em;
+            letter-spacing: 2px;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .login-section {
+            position: static;
+            transform: none;
+            margin-top: 40px;
+            width: 100%;
+            max-width: 320px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    }
+
+    /* Smooth transitions for theme switching */
+    * {
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    }
 </style>
 
-@code {
-    private SongsDB songsDB = new SongsDB();
-    private RatingsDB ratingsDB = new RatingsDB();
-
-    private List<Song> allSongs = new List<Song>();
-    private string searchQuery = "";
-    private bool isLoggedIn = false;
-    private int? userId = null;
-    private Dictionary<int, int> userRatings = new Dictionary<int, int>();
-
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            var sessionResult = await MySession.GetAsync<int>("UserId");
-            if (sessionResult.Success)
-            {
-                userId = sessionResult.Value;
-                isLoggedIn = true;
-            }
+<script>
+    // Initialize floating stars
+    window.addEventListener('load', function() {
+        const starCount = window.innerWidth < 768 ? 20 : 40;
+        for (let i = 0; i < starCount; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.animationDuration = (8 + Math.random() * 8) + 's';
+            star.style.animationDelay = Math.random() * 8 + 's';
+            document.body.appendChild(star);
         }
-        catch { }
+    });
+</script>
 
-        await LoadSongsAsync();
-    }
+<div class="hero-section">
+    <h1 class="aurora-title">Aurora</h1>
+    <p class="hero-subtitle">Welcome to the cosmic music experience</p>
+    <p class="hero-description">
+        Discover, upload, and stream music across the galaxy. Join our community of music lovers
+        and explore the infinite possibilities of sound in the digital universe.
+    </p>
 
-    private async Task LoadSongsAsync()
-    {
-        allSongs = await songsDB.GetAllAsync();
-        if (!string.IsNullOrWhiteSpace(searchQuery))
+    <div class="action-buttons">
+        <button class="cta-button primary-btn" @onclick="ExploreMusic">Explore Music</button>
+        <button class="cta-button secondary-btn" @onclick="CreateAccount">Create Account</button>
+    </div>
+</div>
+
+<div class="login-section">
+    <div class="login-container">
+        <h2 class="login-title">Access Portal</h2>
+
+        <input type="text" placeholder="Username" class="login-input" @bind="username" />
+        <input type="password" placeholder="Password" class="login-input" @bind="password" />
+
+        <button class="login-btn" @onclick="Login">Enter Aurora</button>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
         {
-            allSongs = allSongs.FindAll(s =>
-                s.Title.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
-                s.Artist.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
-        }
-
-        if (isLoggedIn && userId.HasValue)
-        {
-            userRatings.Clear();
-            foreach (var song in allSongs)
-            {
-                var rating = await ratingsDB.GetRatingByUserAndSongAsync(userId.Value, song.SongId);
-                if (rating != null) userRatings[song.SongId] = rating.Rate;
-            }
-        }
-    }
-
-    private async Task SearchAsync() => await LoadSongsAsync();
-
-    private async Task RateSongAsync(Song song, int rating)
-    {
-        if (!isLoggedIn || userId == null) return;
-
-        var existing = await ratingsDB.GetRatingByUserAndSongAsync(userId.Value, song.SongId);
-        if (existing != null)
-        {
-            existing.Rate = rating;
-            await ratingsDB.UpdateAsync(existing);
-        }
-        else
-        {
-            await ratingsDB.InsertGetObjAsync(new Rating
-            {
-                UserId = userId.Value,
-                SongId = song.SongId,
-                Rate = rating
-            });
+            <p class="error-msg">@errorMessage</p>
         }
 
-        userRatings[song.SongId] = rating;
-    }
-
-    private void UploadSong() => NavManager.NavigateTo("/upload");
-    private void Login() => NavManager.NavigateTo("/login");
-}
-
-<div class="page-root">
-    <div class="home-container">
-        <div class="home-title">Aurora Music</div>
-
-        <div class="search-box">
-            <input class="search-bar" placeholder="Search songs..." @bind="searchQuery" @bind:event="oninput" />
-            <button class="search-bar" style="margin-top:10px;" @onclick="SearchAsync">Search</button>
-        </div>
-
-        <div style="display:flex; justify-content: space-between; margin-top:10px;">
-            @if (isLoggedIn)
-            {
-                <button class="button-neon" @onclick="UploadSong">Add Song</button>
-            }
-            else
-            {
-                <button class="button-neon" @onclick="Login">Login</button>
-            }
-        </div>
-
-        <div class="section-card">
-            <div class="section-card-title">All Songs</div>
-            <div class="section-card-text">
-                @if (!allSongs.Any())
-                {
-                    <div>No songs available</div>
-                }
-                else
-                {
-                    <ul>
-                        @foreach (var song in allSongs)
-                        {
-                            <li style="margin-bottom:20px; position: relative; z-index:1;">
-                                <b>@song.Title</b> by @song.Artist
-                                <br />
-                                <audio controls style="margin-top:5px; width:100%;">
-                                    <source src="@song.FilePath" type="audio/mpeg" />
-                                    Your browser does not support the audio element.
-                                </audio>
-
-                                @if (isLoggedIn)
-                                {
-                                    <div style="margin-top:8px;">
-                                        Rate:
-                                        @for (int i = 1; i <= 5; i++)
-                                        {
-                                            var selected = userRatings.ContainsKey(song.SongId) && userRatings[song.SongId] >= i;
-                                            <button class="rating-star @(selected ? "selected" : "")"
-                                                    @onclick="@(() => RateSongAsync(song, i))">
-                                                @i
-                                            </button>
-                                        }
-                                    </div>
-                                }
-                            </li>
-                        }
-                    </ul>
-                }
-            </div>
+        <div class="login-links">
+            <a href="/createaccount">Create Account</a>
+            <span>•</span>
+            <a href="/forgotpassword">Reset Access</a>
         </div>
     </div>
 </div>
+
+@code {
+    private string username = string.Empty;
+    private string password = string.Empty;
+    private string errorMessage = string.Empty;
+
+    private async Task Login()
+    {
+        try
+        {
+            ListenerDB db = new ListenerDB();
+            Listener listener = await db.GetListenerByLoginAsync(username, password);
+
+            if (listener != null)
+            {
+                await MySession.SetAsync("user", listener);
+                NavManager.NavigateTo("/songs");
+            }
+            else
+            {
+                errorMessage = "Invalid credentials. Access denied.";
+            }
+        }
+        catch
+        {
+            errorMessage = "Connection to Aurora failed. Try again.";
+        }
+    }
+
+    private void ExploreMusic()
+    {
+        NavManager.NavigateTo("/songs");
+    }
+
+    private void CreateAccount()
+    {
+        NavManager.NavigateTo("/createaccount");
+    }
+}
