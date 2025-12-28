@@ -485,7 +485,19 @@
 @code {
     private string username = string.Empty;
     private string password = string.Empty;
+    private string registerUsername = string.Empty;
+    private string registerEmail = string.Empty;
+    private string registerPassword = string.Empty;
+    private string confirmPassword = string.Empty;
     private string errorMessage = string.Empty;
+    private string activeTab = "login";
+    private bool isRegistering = false;
+
+    private void SwitchTab(string tab)
+    {
+        activeTab = tab;
+        errorMessage = string.Empty;
+    }
 
     private async Task Login()
     {
@@ -497,7 +509,7 @@
             if (listener != null)
             {
                 await MySession.SetAsync("user", listener);
-                NavManager.NavigateTo("/songs");
+                NavManager.NavigateTo("/user");
             }
             else
             {
@@ -513,6 +525,67 @@
     private void ExploreMusic()
     {
         NavManager.NavigateTo("/songs");
+    }
+
+    private async Task Register()
+    {
+        if (string.IsNullOrWhiteSpace(registerUsername) ||
+            string.IsNullOrWhiteSpace(registerEmail) ||
+            string.IsNullOrWhiteSpace(registerPassword))
+        {
+            errorMessage = "All fields are required.";
+            return;
+        }
+
+        if (registerPassword != confirmPassword)
+        {
+            errorMessage = "Passwords do not match.";
+            return;
+        }
+
+        if (registerPassword.Length < 6)
+        {
+            errorMessage = "Password must be at least 6 characters.";
+            return;
+        }
+
+        isRegistering = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            ListenerDB db = new ListenerDB();
+
+            // Check if username already exists
+            var existingUser = await db.GetListenerByUsernameAsync(registerUsername);
+            if (existingUser != null)
+            {
+                errorMessage = "Username already exists.";
+                return;
+            }
+
+            // Create new user
+            var newListener = new Listener(registerUsername, registerEmail);
+            var createdListener = await db.InsertListenerAsync(newListener, registerPassword);
+
+            if (createdListener != null)
+            {
+                await MySession.SetAsync("user", createdListener);
+                NavManager.NavigateTo("/user");
+            }
+            else
+            {
+                errorMessage = "Failed to create account. Try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Registration failed. Please try again.";
+        }
+        finally
+        {
+            isRegistering = false;
+        }
     }
 
     private void CreateAccount()

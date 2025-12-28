@@ -185,33 +185,44 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var result = await MySession.GetAsync<Listener>("user");
+        // Initialize without JavaScript interop
+    }
 
-        if (!result.Success)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
         {
-            NavManager.NavigateTo("/login");
-            return;
-        }
+            var result = await MySession.GetAsync<Listener>("user");
 
-        listener = new Listener(result.Value);
-        ListenerDB db = new ListenerDB();
-        var freshListener = await db.GetListenerByPkAsync(listener.userID);
+            if (!result.Success)
+            {
+                NavManager.NavigateTo("/login");
+                return;
+            }
 
-        if (freshListener == null)
-        {
-            NavManager.NavigateTo("/login");
-            return;
-        }
+            listener = new Listener(result.Value);
+            ListenerDB db = new ListenerDB();
+            var freshListener = await db.GetListenerByPkAsync(listener.userid);
 
-        listener = freshListener;
+            if (freshListener == null)
+            {
+                NavManager.NavigateTo("/login");
+                return;
+            }
 
-        if (!string.IsNullOrEmpty(listener.pfpLink))
-        {
-            pfpPreview = listener.pfpLink;
-        }
-        else
-        {
-            pfpPreview = "/images/default-pfp.png";
+            listener = freshListener;
+
+            if (listener.profilepicture != null && listener.profilepicture.Length > 0)
+            {
+                string base64 = Convert.ToBase64String(listener.profilepicture);
+                pfpPreview = "data:image/jpeg;base64," + base64;
+            }
+            else
+            {
+                pfpPreview = "/images/default-pfp.png";
+            }
+
+            await InvokeAsync(StateHasChanged);
         }
     }
 
@@ -241,12 +252,12 @@
         }
 
         ListenerDB db = new ListenerDB();
-        int rows = await db.UpdateProfilePictureAsync(listener.userID, uploadedImageBytes);
+        int rows = await db.UpdateProfilePictureAsync(listener.userid, uploadedImageBytes);
 
         if (rows > 0)
         {
             string base64 = Convert.ToBase64String(uploadedImageBytes);
-            listener.pfpLink = "data:image/png;base64," + base64;
+            listener.profilepicture = uploadedImageBytes;
 
             await MySession.SetAsync("user", listener);
 

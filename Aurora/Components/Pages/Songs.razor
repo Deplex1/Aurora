@@ -566,6 +566,33 @@
         font-weight: 500;
         text-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
         opacity: 0.9;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .add-artist-btn {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 1px solid var(--primary-cyan);
+        background: rgba(0, 255, 255, 0.1);
+        color: var(--primary-cyan);
+        font-size: 12px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0.7;
+    }
+
+    .add-artist-btn:hover {
+        opacity: 1;
+        transform: scale(1.1);
+        background: rgba(0, 255, 255, 0.2);
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
     }
 
     .song-meta {
@@ -748,6 +775,17 @@
         box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
     }
 
+    .audio-play-btn.playing {
+        background: rgba(0, 255, 128, 0.3);
+        box-shadow: 0 0 25px rgba(0, 255, 128, 0.8);
+        animation: playingPulse 1.5s ease-in-out infinite;
+    }
+
+    @@keyframes playingPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
     .audio-info {
         flex: 1;
         color: #ffffff;
@@ -766,30 +804,70 @@
         opacity: 0.8;
     }
 
-    .audio-progress {
+    /* Audio Timeline */
+    .audio-timeline {
         width: 100%;
-        height: 4px;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 2px;
+        margin: 15px 0;
+    }
+
+    .timeline-container {
         position: relative;
+        width: 100%;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
         cursor: pointer;
+        margin-bottom: 8px;
         overflow: hidden;
     }
 
-    .audio-progress::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
+    .timeline-progress {
+        width: 100%;
         height: 100%;
-        width: 0%;
-        background: linear-gradient(90deg, var(--primary-cyan), var(--secondary-green));
-        border-radius: 2px;
-        transition: width 0.3s ease;
+        position: relative;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 3px;
     }
 
-    .audio-progress:hover::before {
-        box-shadow: 0 0 10px var(--primary-cyan);
+    .timeline-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-cyan), var(--secondary-green));
+        border-radius: 3px;
+        position: relative;
+        transition: width 0.1s ease;
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
+    }
+
+    .timeline-fill::before {
+        content: "";
+        position: absolute;
+        right: -6px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 12px;
+        height: 12px;
+        background: var(--primary-cyan);
+        border-radius: 50%;
+        box-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+        animation: progressGlow 2s ease-in-out infinite;
+    }
+
+    .timeline-time {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.7);
+        font-family: 'Orbitron', monospace;
+        text-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
+    }
+
+    .timeline-container:hover .timeline-fill {
+        box-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
+    }
+
+    .timeline-container:hover .timeline-fill::before {
+        animation-duration: 1s;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 1);
     }
 
     .audio-player audio {
@@ -851,66 +929,209 @@
         z-index: 2;
     }
 
-    .file-upload-zone {
+    /* Spectacular File Upload Zone */
+    .file-upload-container {
         position: relative;
-        margin-bottom: 25px;
+        margin-bottom: 30px;
         z-index: 2;
     }
 
-    .file-input {
+    .file-input-zone {
         width: 100%;
-        padding: 20px;
-        border-radius: 20px;
+        min-height: 140px;
+        border-radius: 25px;
         border: 2px dashed var(--glass-border);
-        background: rgba(255, 255, 255, 0.02);
-        color: #ffffff;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        backdrop-filter: blur(15px);
+        background:
+            radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.03) 0%, transparent 70%),
+            linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, rgba(0, 255, 255, 0.01) 100%);
         position: relative;
         overflow: hidden;
-        font-family: 'Orbitron', monospace;
+        cursor: pointer;
+        transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        backdrop-filter: blur(20px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+        padding: 25px;
     }
 
-    .file-input::before {
+    .file-input-zone::before {
+        content: "";
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: conic-gradient(
+            from 0deg,
+            rgba(0, 255, 255, 0.2),
+            rgba(128, 0, 255, 0.2),
+            rgba(255, 0, 128, 0.2),
+            rgba(0, 255, 255, 0.2)
+        );
+        border-radius: 27px;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+        z-index: -1;
+    }
+
+    .file-input-zone::after {
         content: "";
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        background: conic-gradient(
-            from 0deg,
-            transparent,
-            rgba(0, 255, 255, 0.1),
-            transparent
-        );
+        background:
+            radial-gradient(circle at 20% 80%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(128, 0, 255, 0.08) 0%, transparent 50%),
+            radial-gradient(circle at 40% 40%, rgba(255, 0, 128, 0.06) 0%, transparent 50%);
         opacity: 0;
         transition: opacity 0.4s ease;
+        animation: uploadParticles 6s ease-in-out infinite;
     }
 
-    .file-input:hover {
+    @@keyframes uploadParticles {
+        0%, 100% { opacity: 0; transform: scale(1); }
+        50% { opacity: 0.3; transform: scale(1.05); }
+    }
+
+    .file-input-zone:hover {
+        transform: translateY(-5px) scale(1.02);
         border-color: var(--primary-cyan);
-        background: rgba(0, 255, 255, 0.05);
-        transform: scale(1.02);
-        box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        box-shadow:
+            0 20px 60px rgba(0, 255, 255, 0.2),
+            0 0 40px rgba(0, 255, 255, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
 
-    .file-input:hover::before {
-        opacity: 1;
-        animation: uploadZoneGlow 2s linear infinite;
+    .file-input-zone:hover::before {
+        opacity: 0.6;
+        animation: borderRotate 3s linear infinite;
     }
 
-    @@keyframes uploadZoneGlow {
+    .file-input-zone:hover::after {
+        opacity: 0.8;
+    }
+
+    @@keyframes borderRotate {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
     }
 
-    .file-input.dragover {
+    .file-input-zone.dragover {
+        transform: translateY(-8px) scale(1.03);
         border-color: var(--secondary-green);
-        background: rgba(0, 255, 128, 0.1);
-        box-shadow: 0 0 40px rgba(0, 255, 128, 0.4);
+        background:
+            radial-gradient(circle at 50% 50%, rgba(0, 255, 128, 0.1) 0%, transparent 70%),
+            linear-gradient(135deg, rgba(0, 255, 128, 0.05) 0%, rgba(0, 255, 255, 0.02) 100%);
+        box-shadow:
+            0 25px 80px rgba(0, 255, 128, 0.3),
+            0 0 60px rgba(0, 255, 128, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+
+    .file-input-zone.dragover::before {
+        opacity: 0.8;
+        animation: borderRotateFast 1s linear infinite;
+    }
+
+    @@keyframes borderRotateFast {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Upload Icon */
+    .upload-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        box-shadow: 0 0 30px rgba(0, 255, 255, 0.4);
+        transition: all 0.4s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .upload-icon::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.3), transparent);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .file-input-zone:hover .upload-icon {
+        transform: scale(1.1) rotate(5deg);
+        box-shadow: 0 0 40px rgba(0, 255, 255, 0.6), 0 0 80px rgba(128, 0, 255, 0.4);
+    }
+
+    .file-input-zone:hover .upload-icon::before {
+        opacity: 1;
+    }
+
+    .file-input-zone.dragover .upload-icon {
+        background: linear-gradient(135deg, var(--secondary-green), var(--primary-cyan));
+        box-shadow: 0 0 50px rgba(0, 255, 128, 0.6);
+        animation: iconPulse 0.8s ease-in-out infinite;
+    }
+
+    @@keyframes iconPulse {
+        0%, 100% { transform: scale(1.1) rotate(5deg); }
+        50% { transform: scale(1.2) rotate(-5deg); }
+    }
+
+    /* Upload Text */
+    .upload-text {
+        text-align: center;
+        color: #ffffff;
+        font-family: 'Orbitron', monospace;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .upload-main-text {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 5px;
+        background: linear-gradient(90deg, var(--primary-cyan), var(--primary-purple));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+    }
+
+    .upload-sub-text {
+        font-size: 12px;
+        opacity: 0.7;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .file-input-zone.dragover .upload-main-text {
+        color: var(--secondary-green);
+        text-shadow: 0 0 15px rgba(0, 255, 128, 0.5);
+    }
+
+    /* Hidden File Input */
+    .file-input {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+        z-index: 10;
     }
 
     .upload-form {
@@ -1054,6 +1275,16 @@
         cursor: not-allowed;
         transform: none;
         box-shadow: none;
+    }
+
+    .upload-help {
+        font-size: 11px;
+        color: rgba(0, 255, 255, 0.7);
+        margin-top: -10px;
+        margin-bottom: 15px;
+        text-align: center;
+        font-family: 'Orbitron', monospace;
+        text-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
     }
 
     .upload-button.uploading {
@@ -1308,37 +1539,199 @@
                 this.classList.remove('dragover');
             });
         });
+
+        // Audio Timeline Functionality
+        function initializeAudioPlayers() {
+            // Handle play/pause buttons
+            document.querySelectorAll('.audio-play-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const songId = this.getAttribute('data-song-id');
+                    const audio = document.getElementById(`audio-${songId}`);
+
+                    if (audio.paused) {
+                        // Pause all other audio elements
+                        document.querySelectorAll('audio').forEach(a => {
+                            if (a !== audio) {
+                                a.pause();
+                                a.currentTime = 0;
+                            }
+                        });
+
+                        audio.play();
+                        this.textContent = '⏸';
+                        this.classList.add('playing');
+                    } else {
+                        audio.pause();
+                        this.textContent = '▶';
+                        this.classList.remove('playing');
+                    }
+                });
+            });
+
+            // Handle timeline clicks
+            document.querySelectorAll('.timeline-progress').forEach(progress => {
+                progress.addEventListener('click', function(e) {
+                    const songId = this.id.replace('progress-', '');
+                    const audio = document.getElementById(`audio-${songId}`);
+                    const rect = this.getBoundingClientRect();
+                    const clickX = e.clientX - rect.left;
+                    const percentage = clickX / rect.width;
+
+                    audio.currentTime = audio.duration * percentage;
+                });
+            });
+
+            // Update progress bars and time displays
+            document.querySelectorAll('audio').forEach(audio => {
+                const songId = audio.id.replace('audio-', '');
+                const fill = document.getElementById(`fill-${songId}`);
+                const currentTime = document.getElementById(`current-${songId}`);
+                const totalTime = document.getElementById(`total-${songId}`);
+                const playBtn = document.querySelector(`[data-song-id="${songId}"]`);
+
+                // Set initial duration from database
+                const dbDuration = parseInt(audio.getAttribute('data-duration')) || 180;
+                const dbMinutes = Math.floor(dbDuration / 60);
+                const dbSeconds = Math.floor(dbDuration % 60);
+                totalTime.textContent = `${dbMinutes}:${dbSeconds.toString().padStart(2, '0')}`;
+
+                // Update total time when metadata loads or when duration becomes available
+                audio.addEventListener('loadedmetadata', function() {
+                    if (!isNaN(audio.duration) && audio.duration > 0 && audio.duration !== Infinity) {
+                        const duration = audio.duration;
+                        const minutes = Math.floor(duration / 60);
+                        const seconds = Math.floor(duration % 60);
+                        totalTime.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    }
+                });
+
+                // Also try to set duration on canplay event
+                audio.addEventListener('canplay', function() {
+                    if (!isNaN(audio.duration) && audio.duration > 0 && audio.duration !== Infinity && totalTime.textContent === '0:00') {
+                        const duration = audio.duration;
+                        const minutes = Math.floor(duration / 60);
+                        const seconds = Math.floor(duration % 60);
+                        totalTime.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    }
+                });
+
+                // Update progress and current time
+                audio.addEventListener('timeupdate', function() {
+                    const progress = (audio.currentTime / audio.duration) * 100;
+                    fill.style.width = `${progress}%`;
+
+                    const currentMinutes = Math.floor(audio.currentTime / 60);
+                    const currentSeconds = Math.floor(audio.currentTime % 60);
+                    currentTime.textContent = `${currentMinutes}:${currentSeconds.toString().padStart(2, '0')}`;
+                });
+
+                // Handle play/pause state changes
+                audio.addEventListener('play', function() {
+                    if (playBtn) {
+                        playBtn.textContent = '⏸';
+                        playBtn.classList.add('playing');
+                    }
+                });
+
+                audio.addEventListener('pause', function() {
+                    if (playBtn) {
+                        playBtn.textContent = '▶';
+                        playBtn.classList.remove('playing');
+                    }
+                });
+
+                // Handle song end
+                audio.addEventListener('ended', function() {
+                    if (playBtn) {
+                        playBtn.textContent = '▶';
+                        playBtn.classList.remove('playing');
+                    }
+                    fill.style.width = '0%';
+                    currentTime.textContent = '0:00';
+                });
+            });
+        }
+
+        // Initialize audio players after DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait for Blazor to finish rendering
+            setTimeout(initializeAudioPlayers, 500);
+        });
+
+        // Also initialize immediately in case DOMContentLoaded already fired
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(initializeAudioPlayers, 500);
+            });
+        } else {
+            // DOM already loaded
+            setTimeout(initializeAudioPlayers, 500);
+        }
+
+        // Re-initialize when new content is loaded (for dynamic content)
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                    // Check if audio elements were added
+                    const hasAudio = Array.from(mutation.addedNodes).some(node =>
+                        node.nodeType === 1 && (node.matches && node.matches('audio') || node.querySelector && node.querySelector('audio'))
+                    );
+                    if (hasAudio) {
+                        setTimeout(initializeAudioPlayers, 100);
+                    }
+                }
+            });
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
     });
 </script>
 
 @code {
     private SongsDB songsDB = new SongsDB();
+    private SongArtistsDB songArtistsDB = new SongArtistsDB();
     private GenereDB genereDB = new GenereDB();
     private List<Song> songs = new List<Song>();
     private List<Song> filteredSongs = new List<Song>();
     private List<Genre> genres = new List<Genre>();
+    private Dictionary<int, string> userNames = new Dictionary<int, string>(); // userid -> username
+    private Dictionary<int, string> songArtists = new Dictionary<int, string>(); // songid -> artist names
     private string searchQuery = "";
     private IBrowserFile selectedFile;
     private string uploadTitle = "";
     private int uploadGenreId = 1;
     private bool isUploading = false;
+    private string additionalArtists = ""; // Comma-separated usernames
     private string currentPlayingId = "";
     private bool isLoading = true;
     private Listener currentUser;
 
     protected override async Task OnInitializedAsync()
     {
-        // Check if user is logged in
-        var userResult = await MySession.GetAsync<Listener>("user");
-        if (!userResult.Success || userResult.Value == null)
-        {
-            NavManager.NavigateTo("/");
-            return;
-        }
-
-        currentUser = userResult.Value;
+        // Initialize data without JavaScript interop
         await LoadSongsAsync();
         await LoadGenresAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Check if user is logged in (safe to do JavaScript interop here)
+            var userResult = await MySession.GetAsync<Listener>("user");
+            if (!userResult.Success || userResult.Value == null)
+            {
+                NavManager.NavigateTo("/");
+                return;
+            }
+
+            currentUser = userResult.Value;
+            await InvokeAsync(StateHasChanged);
+        }
     }
 
     private async Task LoadSongsAsync()
@@ -1346,8 +1739,79 @@
         isLoading = true;
         songs = await songsDB.SelectAllAsync();
         filteredSongs = new List<Song>(songs);
+
+        // Load user names for all songs
+        await LoadUserNamesAsync();
+
         isLoading = false;
         await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadUserNamesAsync()
+    {
+        try
+        {
+            userNames.Clear();
+            songArtists.Clear();
+
+            // Get all unique user IDs from songs (uploaders)
+            var userIds = songs.Select(s => s.UserId).Distinct().ToList();
+
+            // Also get all artist IDs from song_artists table
+            try
+            {
+                foreach (var song in songs)
+                {
+                    var songArtistIds = await songArtistsDB.GetSongArtistsAsync(song.SongId);
+                    userIds.AddRange(songArtistIds);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading artist IDs: {ex.Message}");
+            }
+
+            userIds = userIds.Distinct().ToList();
+
+            if (userIds.Any())
+            {
+                ListenerDB listenerDB = new ListenerDB();
+                foreach (var userId in userIds)
+                {
+                    try
+                    {
+                        var user = await listenerDB.GetListenerByPkAsync(userId);
+                        if (user != null)
+                        {
+                            userNames[userId] = user.username;
+                        }
+                    }
+                    catch
+                    {
+                        // If user not found, use default name
+                        userNames[userId] = $"User #{userId}";
+                    }
+                }
+            }
+
+            // Load artist names for all songs
+            foreach (var song in songs)
+            {
+                try
+                {
+                    var artistNames = await GetArtistNamesAsync(song.SongId);
+                    songArtists[song.SongId] = artistNames;
+                }
+                catch
+                {
+                    songArtists[song.SongId] = "Unknown Artist";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading user names: {ex.Message}");
+        }
     }
 
     private async Task LoadGenresAsync()
@@ -1414,12 +1878,48 @@
 
             // Save to database
             var webPath = $"/uploads/{uniqueFileName}";
-            var newSong = await songsDB.InsertSongAsync(uploadTitle, duration, webPath, currentUser.userID, uploadGenreId);
+            var newSong = await songsDB.InsertSongAsync(uploadTitle, duration, webPath, currentUser.userid, uploadGenreId);
+
+            // Add the uploader as the main artist in song_artists table
+            await songArtistsDB.AddSongArtistAsync(newSong.SongId, currentUser.userid, "main");
+
+            // Add additional artists if specified
+            if (!string.IsNullOrWhiteSpace(additionalArtists))
+            {
+                var artistUsernames = additionalArtists.Split(',')
+                    .Select(name => name.Trim())
+                    .Where(name => !string.IsNullOrWhiteSpace(name))
+                    .ToArray();
+
+                foreach (var username in artistUsernames)
+                {
+                    try
+                    {
+                        // Find user by username
+                        var artistUser = await FindUserByUsernameAsync(username);
+                        if (artistUser != null && artistUser.userid != currentUser.userid)
+                        {
+                            // Add as featured artist
+                            await songArtistsDB.AddSongArtistAsync(newSong.SongId, artistUser.userid, "featured");
+                        }
+                        else if (artistUser == null)
+                        {
+                            // User not found - could show warning in future
+                            Console.WriteLine($"Artist '{username}' not found");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error adding artist '{username}': {ex.Message}");
+                    }
+                }
+            }
 
             // Reset form
             selectedFile = null;
             uploadTitle = "";
             uploadGenreId = genres.Any() ? genres.First().genreID : 1;
+            additionalArtists = "";
 
             // Reload songs
             await LoadSongsAsync();
@@ -1447,6 +1947,61 @@
         return $"{minutes}:{remainingSeconds:D2}";
     }
 
+    private async Task<string> GetArtistNamesAsync(int songId)
+    {
+        try
+        {
+            // Get all artists for this song from song_artists table
+            var artistIds = await songArtistsDB.GetSongArtistsAsync(songId);
+
+            // If no artists in song_artists table, try to migrate from old system
+            if (artistIds.Count == 0)
+            {
+                var song = songs.FirstOrDefault(s => s.SongId == songId);
+                if (song != null)
+                {
+                    // Add the uploader as main artist (migration from old system)
+                    try
+                    {
+                        await songArtistsDB.AddSongArtistAsync(songId, song.UserId, "main");
+                        artistIds.Add(song.UserId);
+                    }
+                    catch
+                    {
+                        // Artist might already exist, continue
+                        artistIds = await songArtistsDB.GetSongArtistsAsync(songId);
+                    }
+                }
+            }
+
+            if (artistIds.Count == 0)
+            {
+                return "Unknown Artist";
+            }
+
+            // Convert user IDs to names
+            var artistNames = new List<string>();
+            foreach (var artistId in artistIds)
+            {
+                if (userNames.ContainsKey(artistId))
+                {
+                    artistNames.Add(userNames[artistId]);
+                }
+                else
+                {
+                    artistNames.Add($"User #{artistId}");
+                }
+            }
+
+            return string.Join(", ", artistNames);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error getting artist names for song {songId}: {ex.Message}");
+            return "Unknown Artist";
+        }
+    }
+
     private void NavigateHome()
     {
         NavManager.NavigateTo("/");
@@ -1457,6 +2012,31 @@
         await MySession.DeleteAsync("user");
         NavManager.NavigateTo("/");
     }
+
+    private void TogglePlay()
+    {
+        // This will be handled by JavaScript
+    }
+
+    private async Task<Listener> FindUserByUsernameAsync(string username)
+    {
+        try
+        {
+            ListenerDB listenerDB = new ListenerDB();
+            return await listenerDB.GetListenerByUsernameAsync(username);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private void ShowAddArtistModal(int songId)
+    {
+        // TODO: Implement add artist modal
+        Console.WriteLine($"Show add artist modal for song {songId}");
+    }
+
 }
 
 <div class="page-container">
@@ -1499,7 +2079,13 @@
                                 <div class="song-header">
                                     <div>
                                         <div class="song-title">@song.Title</div>
-                                        <div class="song-artist">Uploaded by User #@song.UserId</div>
+                                        <div class="song-artist">
+                                            @(songArtists.ContainsKey(song.SongId) ? songArtists[song.SongId] : "Loading...")
+                                            @if (currentUser != null && song.UserId == currentUser.userid)
+                                            {
+                                                <button class="add-artist-btn" @onclick="() => ShowAddArtistModal(song.SongId)" title="Add Artist">+</button>
+                                            }
+                                        </div>
                                     </div>
                                     <button class="play-button @(currentPlayingId == song.SongId.ToString() ? "playing" : "")">▶</button>
                                 </div>
@@ -1523,14 +2109,26 @@
                             {
                                 <div class="audio-player show">
                                     <div class="audio-controls">
-                                        <button class="audio-play-btn">▶</button>
+                                        <button class="audio-play-btn" @onclick="TogglePlay" data-song-id="@song.SongId">▶</button>
                                         <div class="audio-info">
                                             <div class="audio-title">@song.Title</div>
-                                            <div class="audio-artist">User #@song.UserId</div>
+                                            <div class="audio-artist">@(songArtists.ContainsKey(song.SongId) ? songArtists[song.SongId] : "Loading...")</div>
                                         </div>
                                     </div>
-                                    <div class="audio-progress"></div>
-                                    <audio controls autoplay>
+
+                                    <div class="audio-timeline">
+                                        <div class="timeline-container">
+                                            <div class="timeline-progress" id="progress-@song.SongId">
+                                                <div class="timeline-fill" id="fill-@song.SongId"></div>
+                                            </div>
+                                        </div>
+                                        <div class="timeline-time">
+                                            <span class="current-time" id="current-@song.SongId">0:00</span>
+                                            <span class="total-time" id="total-@song.SongId">0:00</span>
+                                        </div>
+                                    </div>
+
+                                    <audio id="audio-@song.SongId" preload="metadata" data-duration="@song.Duration" style="display: none;">
                                         <source src="@song.FilePath" type="audio/mpeg" />
                                         Your browser does not support the audio element.
                                     </audio>
@@ -1550,20 +2148,38 @@
             <div class="upload-section">
                 <div class="upload-title">Upload Your Cosmic Track</div>
 
-                <InputFile
-                    class="file-input"
-                    OnChange="OnFileSelected"
-                    accept=".mp3,audio/mpeg"
-                    multiple="false">
-                    @if (selectedFile != null)
-                    {
-                        <span>@selectedFile.Name</span>
-                    }
-                    else
-                    {
-                        <span>Choose MP3 file...</span>
-                    }
-                </InputFile>
+                <div class="file-upload-container">
+                    <div class="file-input-zone">
+                        <div class="upload-icon">⬆</div>
+                        <div class="upload-text">
+                            <div class="upload-main-text">
+                                @if (selectedFile != null)
+                                {
+                                    @selectedFile.Name
+                                }
+                                else
+                                {
+                                    @:Drop Your Track Here
+                                }
+                            </div>
+                            <div class="upload-sub-text">
+                                @if (selectedFile != null)
+                                {
+                                    @:File selected - Ready to upload!
+                                }
+                                else
+                                {
+                                    @:MP3 files only • Click or drag & drop
+                                }
+                            </div>
+                        </div>
+                        <InputFile
+                            class="file-input"
+                            OnChange="OnFileSelected"
+                            accept=".mp3,audio/mpeg"
+                            multiple="false" />
+                    </div>
+                </div>
 
                 <div class="upload-form">
                     <input
@@ -1579,6 +2195,15 @@
                             <option value="@genre.genreID">@genre.name</option>
                         }
                     </select>
+
+                    <input
+                        class="upload-input"
+                        placeholder="Additional Artists (optional, comma-separated)"
+                        @bind="additionalArtists" />
+
+                    <div class="upload-help">
+                        💡 Add other artists by username, separated by commas (optional)
+                    </div>
                 </div>
 
                 <button

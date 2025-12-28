@@ -349,5 +349,84 @@ namespace DBL
             }
             return list;
         }
+
+        /// <summary>
+        /// Execute non-query SQL commands (INSERT, UPDATE, DELETE)
+        /// </summary>
+        protected async Task ExecuteNonQueryAsync(string query, Dictionary<string, object> parameters = null)
+        {
+            if (String.IsNullOrEmpty(query))
+                return;
+
+            await PreQueryAsync(query);
+            try
+            {
+                if (parameters != null)
+                {
+                    foreach (var param in parameters)
+                    {
+                        var parameter = cmd.CreateParameter();
+                        parameter.ParameterName = "@" + param.Key;
+                        parameter.Value = param.Value ?? DBNull.Value;
+                        cmd.Parameters.Add(parameter);
+                    }
+                }
+                await cmd.ExecuteNonQueryAsync();
+            }
+            catch (Exception e)
+            {
+                System.Diagnostics.Debug.WriteLine(e.Message + "\nsql:" + cmd.CommandText);
+            }
+            finally
+            {
+                await PostQueryAsync();
+            }
+        }
+
+        /// <summary>
+        /// Select a list of scalar values from database
+        /// </summary>
+        protected async Task<List<T>> SelectScalarListAsync<T>(string query, Dictionary<string, object> parameters = null)
+        {
+            List<T> list = new List<T>();
+            if (String.IsNullOrEmpty(query))
+                return list;
+
+            await PreQueryAsync(query);
+            try
+            {
+                if (parameters != null)
+                {
+                    foreach (var param in parameters)
+                    {
+                        var parameter = cmd.CreateParameter();
+                        parameter.ParameterName = "@" + param.Key;
+                        parameter.Value = param.Value ?? DBNull.Value;
+                        cmd.Parameters.Add(parameter);
+                    }
+                }
+
+                using (DbDataReader reader = await cmd.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        if (!reader.IsDBNull(0))
+                        {
+                            list.Add((T)Convert.ChangeType(reader[0], typeof(T)));
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                System.Diagnostics.Debug.WriteLine(e.Message + "\nsql:" + cmd.CommandText);
+                list.Clear();
+            }
+            finally
+            {
+                await PostQueryAsync();
+            }
+            return list;
+        }
     }
 }

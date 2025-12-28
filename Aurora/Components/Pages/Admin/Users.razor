@@ -40,7 +40,7 @@ else
 			@foreach (var u in users)
 			{
 				<tr>
-					<td>@u.userID</td>
+					<td>@u.userid</td>
 					<td>@u.username</td>
 					<td>@u.email</td>
 					<td>@(u.IsAdmin == 1 ? "Yes" : "No")</td>
@@ -61,24 +61,33 @@ else
 
 	protected override async Task OnInitializedAsync()
 	{
-		var res = await MySession.GetAsync<Listener>("user");
-		if (!res.Success || res.Value == null)
-		{
-			NavManager.NavigateTo("/login");
-			return;
-		}
-
-		var current = new Listener(res.Value);
-		if (current.IsAdmin != 1)
-		{
-			isAdmin = false;
-			loaded = true;
-			return;
-		}
-		isAdmin = true;
-
-		await LoadUsers();
+		// Initialize without JavaScript interop
 		loaded = true;
+	}
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			var res = await MySession.GetAsync<Listener>("user");
+			if (!res.Success || res.Value == null)
+			{
+				NavManager.NavigateTo("/login");
+				return;
+			}
+
+			var current = new Listener(res.Value);
+			if (current.IsAdmin != 1)
+			{
+				isAdmin = false;
+				await InvokeAsync(StateHasChanged);
+				return;
+			}
+			isAdmin = true;
+
+			await LoadUsers();
+			await InvokeAsync(StateHasChanged);
+		}
 	}
 
 	private async Task LoadUsers()
@@ -94,7 +103,7 @@ else
 	{
 		ListenerDB db = new ListenerDB();
 		int newVal = u.IsAdmin == 1 ? 0 : 1;
-		await db.SetAdminAsync(u.userID, newVal);
+		await db.SetAdminAsync(u.userid, newVal);
 		await LoadUsers();
 	}
 

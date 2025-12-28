@@ -4,101 +4,52 @@ using System.Threading.Tasks;
 
 namespace DBL
 {
-    public class SongsDB : BaseDB<Song>
+    public class SongArtistsDB : BaseDB<SongArtist>
     {
         protected override string GetTableName()
         {
-            return "songs";
+            return "song_artists";
         }
 
         protected override string GetPrimaryKeyName()
         {
-            return "songid";
+            return "songid,userid"; // Composite primary key
         }
 
-        protected override async Task<Song> CreateModelAsync(object[] row)
+        protected override async Task<SongArtist> CreateModelAsync(object[] row)
         {
-            return new Song(
+            return new SongArtist(
                 int.Parse(row[0].ToString()), // songid
-                row[1].ToString(),            // title
-                int.Parse(row[2].ToString()), // duration
-                row[3].ToString(),            // filepath
-                int.Parse(row[4].ToString()), // userid
-                int.Parse(row[5].ToString())  // genreid
+                int.Parse(row[1].ToString()), // userid
+                row[2].ToString(),            // role
+                DateTime.Parse(row[3].ToString()) // added_date
             );
         }
 
-        public async Task<List<Song>> SelectAllAsync()
+        public async Task<List<SongArtist>> SelectAllAsync()
         {
             return await base.SelectAllAsync();
         }
 
-        public async Task<Song> InsertSongAsync(string title, int duration, string filePath, int userId, int genreId)
-        {
-            var values = new Dictionary<string, object>
-            {
-                { "title", title },
-                { "duration", duration },
-                { "filepath", filePath },
-                { "userid", userId },
-                { "genreid", genreId }
-            };
-            return await base.InsertGetObjAsync(values);
-        }
-
-        public async Task<int> SaveDurationAsync(int songId, int duration)
-        {
-            var values = new Dictionary<string, object>
-            {
-                { "duration", duration }
-            };
-            var parameters = new Dictionary<string, object>
-            {
-                { "songid", songId }
-            };
-            return await base.UpdateAsync(values, parameters);
-        }
-
-        public async Task<List<Song>> SearchLikeAsync(string term)
-        {
-            string sql = "SELECT * FROM songs WHERE title LIKE @term";
-            var parameters = new Dictionary<string, object>
-            {
-                { "term", $"%{term}%" }
-            };
-            return await SelectAllAsync(sql, parameters);
-        }
-
-        public async Task<Song> SelectSingleAsync(int id)
-        {
-            var parameters = new Dictionary<string, object>
-            {
-                { "songid", id }
-            };
-            var list = await SelectAllAsync(parameters);
-            return list.Count > 0 ? list[0] : null;
-        }
-
-        // Song-Artists relationship methods
-        public async Task AddSongArtistAsync(int songId, int artistId, string role = "main")
+        public async Task AddSongArtistAsync(int songId, int userId, string role = "main")
         {
             string sql = "INSERT INTO song_artists (songid, userid, role) VALUES (@songid, @userid, @role)";
             var parameters = new Dictionary<string, object>
             {
                 { "songid", songId },
-                { "userid", artistId },
+                { "userid", userId },
                 { "role", role }
             };
             await ExecuteNonQueryAsync(sql, parameters);
         }
 
-        public async Task RemoveSongArtistAsync(int songId, int artistId)
+        public async Task RemoveSongArtistAsync(int songId, int userId)
         {
             string sql = "DELETE FROM song_artists WHERE songid = @songid AND userid = @userid";
             var parameters = new Dictionary<string, object>
             {
                 { "songid", songId },
-                { "userid", artistId }
+                { "userid", userId }
             };
             await ExecuteNonQueryAsync(sql, parameters);
         }
@@ -135,6 +86,16 @@ namespace DBL
             {
                 await AddSongArtistAsync(songId, artistId, role);
             }
+        }
+
+        public async Task<List<SongArtist>> GetSongArtistsWithDetailsAsync(int songId)
+        {
+            string sql = "SELECT * FROM song_artists WHERE songid = @songid ORDER BY role, userid";
+            var parameters = new Dictionary<string, object>
+            {
+                { "songid", songId }
+            };
+            return await SelectAllAsync(sql, parameters);
         }
     }
 }

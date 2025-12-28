@@ -26,28 +26,21 @@ namespace DBL
 
         protected override async Task<Listener> CreateModelAsync(object[] row)
         {
-            byte[]? blobBytes = null;
+            byte[]? profilePictureBytes = null;
 
             if (row[4] != DBNull.Value)
             {
-                blobBytes = (byte[])row[4];
-            }
-
-            string? base64Image = null;
-
-            if (blobBytes != null && blobBytes.Length > 0)
-            {
-                string base64 = Convert.ToBase64String(blobBytes);
-                base64Image = $"data:image/jpeg;base64,{base64}";
+                profilePictureBytes = (byte[])row[4];
             }
 
             return new Listener(
-                int.Parse(row[0].ToString()),
-                row[1].ToString(),
-                row[3].ToString(),
-                base64Image,
-                int.Parse(row[5].ToString()),
-                row[6].ToString()
+                int.Parse(row[0].ToString()), // userid
+                row[1].ToString(),            // username
+                row[2].ToString(),            // password
+                row[3].ToString(),            // email
+                profilePictureBytes,          // profilepicture (BLOB)
+                int.Parse(row[5].ToString()), // IsAdmin
+                row[6].ToString()             // ResetCode
             );
 
         }
@@ -83,7 +76,7 @@ namespace DBL
             Dictionary<string, object> fillValues = new Dictionary<string, object>();
             Dictionary<string, object> filterValues = new Dictionary<string, object>();
             fillValues.Add("password", password);
-            filterValues.Add("userid", Listener.userID.ToString());
+            filterValues.Add("userid", Listener.userid.ToString());
             return await base.UpdateAsync(fillValues, filterValues);
         }
 
@@ -102,7 +95,7 @@ namespace DBL
         public async Task<int> DeleteAsync(Listener Listener)
         {
             Dictionary<string, object> filterValues = new Dictionary<string, object>();
-            filterValues.Add("userid", Listener.userID.ToString());
+            filterValues.Add("userid", Listener.userid.ToString());
             return await base.DeleteAsync(filterValues);
         }
 
@@ -114,6 +107,34 @@ namespace DBL
             fillValues.Add("IsAdmin", isAdmin);
             filterValues.Add("userid", userId.ToString());
             return await base.UpdateAsync(fillValues, filterValues);
+        }
+
+        public async Task<Listener?> GetListenerByUsernameAsync(string username)
+        {
+            var parameters = new Dictionary<string, object>
+            {
+                { "username", username }
+            };
+            var list = await SelectAllAsync(parameters);
+            return list.Count > 0 ? list[0] : null;
+        }
+
+        public async Task<Listener> InsertListenerAsync(Listener listener, string password)
+        {
+            // Hash the password (you should implement proper password hashing)
+            string hashedPassword = password; // TODO: Implement proper password hashing
+
+            var values = new Dictionary<string, object>
+            {
+                { "username", listener.username },
+                { "password", hashedPassword },
+                { "email", listener.email },
+                { "profilepicture", listener.profilepicture ?? new byte[0] },
+                { "IsAdmin", 0 },
+                { "ResetCode", "" }
+            };
+
+            return await base.InsertGetObjAsync(values);
         }
 
         public async Task<Listener?> GetListenerByLoginAsync(string username, string password)

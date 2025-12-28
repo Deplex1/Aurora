@@ -8,48 +8,42 @@ namespace Models
 {
     public class Listener
     {
-        public Listener() 
+        public Listener()
         {
             this.username = string.Empty;
+            this.password = string.Empty;
             this.email = string.Empty;
-            this.pfpLink = string.Empty;
-            this.userID = 0;
+            this.profilepicture = null;
+            this.userid = 0;
             this.IsAdmin = 0;
-            this.reset_code = string.Empty;
+            this.ResetCode = string.Empty;
         }
-        public int userID { get; set; }
-        
-        public string email { get; set; }
+
+        public int userid { get; set; }
         public string username { get; set; }
-        public string? pfpLink { get; set; }
+        public string password { get; set; }
+        public string email { get; set; }
+        public byte[]? profilepicture { get; set; }
         public int IsAdmin { get; set; }
-        
-        public string reset_code { get; set; }
+        public string ResetCode { get; set; }
 
-        public Listener(int userID, string username, string email, string pfpLink, int IsAdmin) 
+        public Listener(int userid, string username, string password, string email, byte[]? profilepicture, int IsAdmin, string ResetCode)
         {
-            this.userID = userID;
-            this.email = email;
+            this.userid = userid;
             this.username = username;
-            this.pfpLink = pfpLink;
-            this.IsAdmin = IsAdmin;
-        }
-        public Listener(int userID, string username, string email, string pfpLink, int IsAdmin, string resendCode)
-        {
-            this.userID = userID;
+            this.password = password;
             this.email = email;
-            this.username = username;
-            this.pfpLink = pfpLink;
+            this.profilepicture = profilepicture;
             this.IsAdmin = IsAdmin;
-            this.reset_code = resendCode;
-
+            this.ResetCode = ResetCode;
         }
 
-        public Listener(int userID, string username, string email, int IsAdmin)
+        public Listener(int userid, string username, string email, byte[]? profilepicture, int IsAdmin)
         {
-            this.userID = userID;
-            this.email = email;
+            this.userid = userid;
             this.username = username;
+            this.email = email;
+            this.profilepicture = profilepicture;
             this.IsAdmin = IsAdmin;
         }
 
@@ -60,16 +54,14 @@ namespace Models
         }
 
         public Listener(Listener ls)
-        { 
-            this.pfpLink = ls.pfpLink;  
-            this.userID = ls.userID;
-            this.email = ls.email;
+        {
+            this.userid = ls.userid;
             this.username = ls.username;
+            this.password = ls.password;
+            this.email = ls.email;
+            this.profilepicture = ls.profilepicture;
             this.IsAdmin = ls.IsAdmin;
+            this.ResetCode = ls.ResetCode;
         }
-        
-
-
     }
-
 }
