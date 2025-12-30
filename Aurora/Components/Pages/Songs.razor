@@ -1,39 +1,248 @@
 ﻿@page "/songs"
-@using DBL
-@using Models
-@using Microsoft.AspNetCore.Components.Forms
-@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
-@using System.IO
-@inject NavigationManager NavManager
-@inject ProtectedSessionStorage MySession
+@inherits SongsPage
 
 <style>
-    :root {
-        --primary-cyan: #00ffff;
-        --primary-blue: #0080ff;
-        --primary-purple: #8000ff;
-        --primary-pink: #ff0080;
-        --secondary-green: #00ff80;
-        --accent-orange: #ff8000;
-        --dark-space: #0a0a0f;
-        --deep-space: #050509;
-        --glass-bg: rgba(255, 255, 255, 0.05);
-        --glass-border: rgba(255, 255, 255, 0.1);
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f0f0f0;
+        margin: 0;
+        padding: 20px;
     }
 
-    * {
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    h1 {
+        color: #333;
+        text-align: center;
+    }
+
+    .search-box {
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .search-input {
+        padding: 10px;
+        width: 300px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    .content {
+        display: flex;
+        gap: 20px;
+    }
+
+    .songs-list {
+        flex: 1;
+    }
+
+    .song-card {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+        cursor: pointer;
+    }
+
+    .song-card:hover {
+        background: #f9f9f9;
+    }
+
+    .song-title {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .song-artist {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 5px;
+    }
+
+    .song-duration {
+        color: #999;
+        font-size: 12px;
+    }
+
+    .play-button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+
+    .play-button:hover {
+        background: #0056b3;
+    }
+
+    .upload-form {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        width: 300px;
+    }
+
+    .upload-form h3 {
+        margin-top: 0;
+        color: #333;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
         box-sizing: border-box;
     }
 
-    body {
-        margin: 0;
-        padding: 0;
-        font-family: 'Orbitron', 'Segoe UI', monospace;
-        background: var(--deep-space);
-        overflow-x: hidden;
-        min-height: 100vh;
-        perspective: 1000px;
-        cursor: none;
+    .form-select {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+
+    .upload-button {
+        background: #28a745;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        width: 100%;
+    }
+
+    .upload-button:hover {
+        background: #218838;
+    }
+
+    .upload-button:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+
+    .loading {
+        text-align: center;
+        color: #666;
+        padding: 20px;
+    }
+
+    .audio-player {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 10px;
+    }
+
+    .audio-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .audio-play-btn {
+        background: #007bff;
+        color: white;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+    }
+
+    .audio-play-btn:hover {
+        background: #0056b3;
+    }
+
+    .audio-info {
+        flex: 1;
+    }
+
+    .audio-title {
+        font-weight: bold;
+        margin-bottom: 2px;
+    }
+
+    .audio-artist {
+        color: #666;
+        font-size: 12px;
+    }
+
+    .timeline-container {
+        width: 100%;
+        height: 6px;
+        background: #ddd;
+        border-radius: 3px;
+        cursor: pointer;
+        margin: 10px 0;
+    }
+
+    .timeline-fill {
+        height: 100%;
+        background: #007bff;
+        border-radius: 3px;
+    }
+
+    .timeline-time {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: #666;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .logo {
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .nav-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+    .nav-btn {
+        padding: 8px 16px;
+        background: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .nav-btn:hover {
+        background: #545b62;
     }
 
     /* Custom Cursor */
@@ -870,6 +1079,35 @@
         box-shadow: 0 0 20px rgba(0, 255, 255, 1);
     }
 
+    /* Enhanced timeline interactivity */
+    .timeline-container {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .timeline-container:hover {
+        transform: scaleY(1.1);
+    }
+
+    .timeline-container:hover .timeline-progress {
+        background: rgba(255, 255, 255, 0.15);
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+    }
+
+    .timeline-container:active .timeline-progress {
+        transform: scaleY(1.05);
+    }
+
+    /* Visual feedback for seeking */
+    .timeline-container.seeking .timeline-progress {
+        background: rgba(255, 128, 0, 0.2);
+    }
+
+    .timeline-container.seeking .timeline-fill {
+        background: linear-gradient(90deg, var(--accent-orange), var(--primary-cyan));
+        box-shadow: 0 0 15px rgba(255, 128, 0, 0.8);
+    }
+
     .audio-player audio {
         display: none;
     }
@@ -1422,45 +1660,10 @@
             transition-duration: 0.01ms !important;
         }
     }
-
-    /* High contrast mode support */
-    @@media (prefers-contrast: high) {
-        .song-card {
-            border: 2px solid var(--primary-cyan);
-        }
-
-        .nav-btn {
-            border: 2px solid var(--primary-cyan);
-        }
-    }
 </style>
 
 <script>
-    // Quantum Cursor System
-    document.addEventListener('DOMContentLoaded', function() {
-        const cursor = document.createElement('div');
-        cursor.className = 'cursor';
-        document.body.appendChild(cursor);
 
-        const cursorTrail = document.createElement('div');
-        cursorTrail.className = 'cursor trail';
-        document.body.appendChild(cursorTrail);
-
-        let mouseX = 0, mouseY = 0;
-        let cursorX = 0, cursorY = 0;
-        let trailX = 0, trailY = 0;
-
-        document.addEventListener('mousemove', function(e) {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
-        });
-
-        function updateCursor() {
-            cursorX += (mouseX - cursorX) * 0.1;
-            cursorY += (mouseY - cursorY) * 0.1;
-
-            trailX += (mouseX - trailX) * 0.05;
-            trailY += (mouseY - trailY) * 0.05;
 
             cursor.style.left = cursorX + 'px';
             cursor.style.top = cursorY + 'px';
@@ -1472,21 +1675,6 @@
         }
         updateCursor();
 
-        // Neural Network Nodes
-        const neuralContainer = document.createElement('div');
-        neuralContainer.className = 'neural-nodes';
-        document.body.appendChild(neuralContainer);
-
-        for (let i = 0; i < 12; i++) {
-            const node = document.createElement('div');
-            node.className = 'neural-node';
-            node.style.left = Math.random() * 100 + '%';
-            node.style.top = Math.random() * 100 + '%';
-            node.style.animationDelay = Math.random() * 3 + 's';
-            neuralContainer.appendChild(node);
-        }
-
-        // Data Streams
         function createDataStream() {
             const stream = document.createElement('div');
             stream.className = 'data-stream';
@@ -1569,17 +1757,96 @@
                 });
             });
 
-            // Handle timeline clicks
-            document.querySelectorAll('.timeline-progress').forEach(progress => {
-                progress.addEventListener('click', function(e) {
-                    const songId = this.id.replace('progress-', '');
-                    const audio = document.getElementById(`audio-${songId}`);
-                    const rect = this.getBoundingClientRect();
-                    const clickX = e.clientX - rect.left;
-                    const percentage = clickX / rect.width;
+            // Handle timeline clicks - improved seek functionality
+            document.querySelectorAll('.timeline-container').forEach(container => {
+                container.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
 
-                    audio.currentTime = audio.duration * percentage;
+                    const songId = this.querySelector('.timeline-progress').id.replace('progress-', '');
+                    const audio = document.getElementById(`audio-${songId}`);
+                    const progress = this.querySelector('.timeline-progress');
+                    const rect = progress.getBoundingClientRect();
+
+                    // Calculate click position relative to progress bar
+                    const clickX = e.clientX - rect.left;
+                    const percentage = Math.max(0, Math.min(1, clickX / rect.width));
+
+                    // Set audio current time
+                    if (audio.duration && !isNaN(audio.duration)) {
+                        audio.currentTime = audio.duration * percentage;
+
+                        // Update progress bar immediately
+                        const fill = document.getElementById(`fill-${songId}`);
+                        if (fill) {
+                            fill.style.width = `${percentage * 100}%`;
+                        }
+
+                        // Update current time display
+                        const currentTime = document.getElementById(`current-${songId}`);
+                        if (currentTime) {
+                            const currentMinutes = Math.floor(audio.currentTime / 60);
+                            const currentSeconds = Math.floor(audio.currentTime % 60);
+                            currentTime.textContent = `${currentMinutes}:${currentSeconds.toString().padStart(2, '0')}`;
+                        }
+                    }
                 });
+
+                // Add mouse drag support for continuous seeking
+                let isDragging = false;
+                let currentContainer = null;
+
+                container.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    isDragging = true;
+                    currentContainer = this;
+                    this.classList.add('seeking');
+
+                    // Perform initial seek
+                    performSeek(this, e);
+                });
+
+                document.addEventListener('mousemove', function(e) {
+                    if (!isDragging || !currentContainer) return;
+
+                    performSeek(currentContainer, e);
+                });
+
+                document.addEventListener('mouseup', function() {
+                    if (isDragging && currentContainer) {
+                        currentContainer.classList.remove('seeking');
+                    }
+                    isDragging = false;
+                    currentContainer = null;
+                });
+
+                // Helper function for seeking
+                function performSeek(container, e) {
+                    const songId = container.querySelector('.timeline-progress').id.replace('progress-', '');
+                    const audio = document.getElementById(`audio-${songId}`);
+                    const progress = container.querySelector('.timeline-progress');
+                    const rect = progress.getBoundingClientRect();
+
+                    const mouseX = e.clientX - rect.left;
+                    const percentage = Math.max(0, Math.min(1, mouseX / rect.width));
+
+                    if (audio.duration && !isNaN(audio.duration)) {
+                        audio.currentTime = audio.duration * percentage;
+
+                        const fill = document.getElementById(`fill-${songId}`);
+                        if (fill) {
+                            fill.style.width = `${percentage * 100}%`;
+                        }
+
+                        const currentTime = document.getElementById(`current-${songId}`);
+                        if (currentTime) {
+                            const currentMinutes = Math.floor(audio.currentTime / 60);
+                            const currentSeconds = Math.floor(audio.currentTime % 60);
+                            currentTime.textContent = `${currentMinutes}:${currentSeconds.toString().padStart(2, '0')}`;
+                        }
+                    }
+                }
             });
 
             // Update progress bars and time displays
@@ -1684,360 +1951,8 @@
             });
         });
 
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
-    });
 </script>
 
-@code {
-    private SongsDB songsDB = new SongsDB();
-    private SongArtistsDB songArtistsDB = new SongArtistsDB();
-    private GenereDB genereDB = new GenereDB();
-    private List<Song> songs = new List<Song>();
-    private List<Song> filteredSongs = new List<Song>();
-    private List<Genre> genres = new List<Genre>();
-    private Dictionary<int, string> userNames = new Dictionary<int, string>(); // userid -> username
-    private Dictionary<int, string> songArtists = new Dictionary<int, string>(); // songid -> artist names
-    private string searchQuery = "";
-    private IBrowserFile selectedFile;
-    private string uploadTitle = "";
-    private int uploadGenreId = 1;
-    private bool isUploading = false;
-    private string additionalArtists = ""; // Comma-separated usernames
-    private string currentPlayingId = "";
-    private bool isLoading = true;
-    private Listener currentUser;
-
-    protected override async Task OnInitializedAsync()
-    {
-        // Initialize data without JavaScript interop
-        await LoadSongsAsync();
-        await LoadGenresAsync();
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            // Check if user is logged in (safe to do JavaScript interop here)
-            var userResult = await MySession.GetAsync<Listener>("user");
-            if (!userResult.Success || userResult.Value == null)
-            {
-                NavManager.NavigateTo("/");
-                return;
-            }
-
-            currentUser = userResult.Value;
-            await InvokeAsync(StateHasChanged);
-        }
-    }
-
-    private async Task LoadSongsAsync()
-    {
-        isLoading = true;
-        songs = await songsDB.SelectAllAsync();
-        filteredSongs = new List<Song>(songs);
-
-        // Load user names for all songs
-        await LoadUserNamesAsync();
-
-        isLoading = false;
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task LoadUserNamesAsync()
-    {
-        try
-        {
-            userNames.Clear();
-            songArtists.Clear();
-
-            // Get all unique user IDs from songs (uploaders)
-            var userIds = songs.Select(s => s.UserId).Distinct().ToList();
-
-            // Also get all artist IDs from song_artists table
-            try
-            {
-                foreach (var song in songs)
-                {
-                    var songArtistIds = await songArtistsDB.GetSongArtistsAsync(song.SongId);
-                    userIds.AddRange(songArtistIds);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error loading artist IDs: {ex.Message}");
-            }
-
-            userIds = userIds.Distinct().ToList();
-
-            if (userIds.Any())
-            {
-                ListenerDB listenerDB = new ListenerDB();
-                foreach (var userId in userIds)
-                {
-                    try
-                    {
-                        var user = await listenerDB.GetListenerByPkAsync(userId);
-                        if (user != null)
-                        {
-                            userNames[userId] = user.username;
-                        }
-                    }
-                    catch
-                    {
-                        // If user not found, use default name
-                        userNames[userId] = $"User #{userId}";
-                    }
-                }
-            }
-
-            // Load artist names for all songs
-            foreach (var song in songs)
-            {
-                try
-                {
-                    var artistNames = await GetArtistNamesAsync(song.SongId);
-                    songArtists[song.SongId] = artistNames;
-                }
-                catch
-                {
-                    songArtists[song.SongId] = "Unknown Artist";
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading user names: {ex.Message}");
-        }
-    }
-
-    private async Task LoadGenresAsync()
-    {
-        genres = await genereDB.GetAllAsync();
-        if (genres.Any() && uploadGenreId == 1)
-        {
-            uploadGenreId = genres.First().genreID;
-        }
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task SearchSongs()
-    {
-        if (string.IsNullOrWhiteSpace(searchQuery))
-        {
-            filteredSongs = new List<Song>(songs);
-        }
-        else
-        {
-            filteredSongs = await songsDB.SearchLikeAsync(searchQuery);
-        }
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task OnSearchInput(ChangeEventArgs e)
-    {
-        searchQuery = e.Value?.ToString() ?? "";
-        await SearchSongs();
-    }
-
-    private void OnFileSelected(InputFileChangeEventArgs e)
-    {
-        selectedFile = e.File;
-    }
-
-    private async Task UploadSong()
-    {
-        if (selectedFile == null || string.IsNullOrWhiteSpace(uploadTitle) || currentUser == null)
-        {
-            return;
-        }
-
-        isUploading = true;
-
-        try
-        {
-            // Create uploads directory if it doesn't exist
-            var uploadsPath = Path.Combine("wwwroot", "uploads");
-            Directory.CreateDirectory(uploadsPath);
-
-            // Generate unique filename
-            var fileExtension = Path.GetExtension(selectedFile.Name);
-            var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
-            var filePath = Path.Combine(uploadsPath, uniqueFileName);
-
-            // Save file
-            await using var stream = selectedFile.OpenReadStream(maxAllowedSize: 50 * 1024 * 1024); // 50MB limit
-            await using var fileStream = new FileStream(filePath, FileMode.Create);
-            await stream.CopyToAsync(fileStream);
-
-            // Get duration (placeholder for now - you might want to extract from MP3 metadata)
-            var duration = 180; // Default 3 minutes
-
-            // Save to database
-            var webPath = $"/uploads/{uniqueFileName}";
-            var newSong = await songsDB.InsertSongAsync(uploadTitle, duration, webPath, currentUser.userid, uploadGenreId);
-
-            // Add the uploader as the main artist in song_artists table
-            await songArtistsDB.AddSongArtistAsync(newSong.SongId, currentUser.userid, "main");
-
-            // Add additional artists if specified
-            if (!string.IsNullOrWhiteSpace(additionalArtists))
-            {
-                var artistUsernames = additionalArtists.Split(',')
-                    .Select(name => name.Trim())
-                    .Where(name => !string.IsNullOrWhiteSpace(name))
-                    .ToArray();
-
-                foreach (var username in artistUsernames)
-                {
-                    try
-                    {
-                        // Find user by username
-                        var artistUser = await FindUserByUsernameAsync(username);
-                        if (artistUser != null && artistUser.userid != currentUser.userid)
-                        {
-                            // Add as featured artist
-                            await songArtistsDB.AddSongArtistAsync(newSong.SongId, artistUser.userid, "featured");
-                        }
-                        else if (artistUser == null)
-                        {
-                            // User not found - could show warning in future
-                            Console.WriteLine($"Artist '{username}' not found");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Error adding artist '{username}': {ex.Message}");
-                    }
-                }
-            }
-
-            // Reset form
-            selectedFile = null;
-            uploadTitle = "";
-            uploadGenreId = genres.Any() ? genres.First().genreID : 1;
-            additionalArtists = "";
-
-            // Reload songs
-            await LoadSongsAsync();
-        }
-        catch (Exception ex)
-        {
-            // Handle error - you might want to show an error message
-            Console.WriteLine($"Upload failed: {ex.Message}");
-        }
-        finally
-        {
-            isUploading = false;
-        }
-    }
-
-    private void PlaySong(string songId)
-    {
-        currentPlayingId = songId;
-    }
-
-    private string FormatDuration(int seconds)
-    {
-        var minutes = seconds / 60;
-        var remainingSeconds = seconds % 60;
-        return $"{minutes}:{remainingSeconds:D2}";
-    }
-
-    private async Task<string> GetArtistNamesAsync(int songId)
-    {
-        try
-        {
-            // Get all artists for this song from song_artists table
-            var artistIds = await songArtistsDB.GetSongArtistsAsync(songId);
-
-            // If no artists in song_artists table, try to migrate from old system
-            if (artistIds.Count == 0)
-            {
-                var song = songs.FirstOrDefault(s => s.SongId == songId);
-                if (song != null)
-                {
-                    // Add the uploader as main artist (migration from old system)
-                    try
-                    {
-                        await songArtistsDB.AddSongArtistAsync(songId, song.UserId, "main");
-                        artistIds.Add(song.UserId);
-                    }
-                    catch
-                    {
-                        // Artist might already exist, continue
-                        artistIds = await songArtistsDB.GetSongArtistsAsync(songId);
-                    }
-                }
-            }
-
-            if (artistIds.Count == 0)
-            {
-                return "Unknown Artist";
-            }
-
-            // Convert user IDs to names
-            var artistNames = new List<string>();
-            foreach (var artistId in artistIds)
-            {
-                if (userNames.ContainsKey(artistId))
-                {
-                    artistNames.Add(userNames[artistId]);
-                }
-                else
-                {
-                    artistNames.Add($"User #{artistId}");
-                }
-            }
-
-            return string.Join(", ", artistNames);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error getting artist names for song {songId}: {ex.Message}");
-            return "Unknown Artist";
-        }
-    }
-
-    private void NavigateHome()
-    {
-        NavManager.NavigateTo("/");
-    }
-
-    private async Task Logout()
-    {
-        await MySession.DeleteAsync("user");
-        NavManager.NavigateTo("/");
-    }
-
-    private void TogglePlay()
-    {
-        // This will be handled by JavaScript
-    }
-
-    private async Task<Listener> FindUserByUsernameAsync(string username)
-    {
-        try
-        {
-            ListenerDB listenerDB = new ListenerDB();
-            return await listenerDB.GetListenerByUsernameAsync(username);
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    private void ShowAddArtistModal(int songId)
-    {
-        // TODO: Implement add artist modal
-        Console.WriteLine($"Show add artist modal for song {songId}");
-    }
-
-}
 
 <div class="page-container">
     <div class="header">
@@ -2052,7 +1967,7 @@
             <input
                 class="search-bar"
                 placeholder="Search songs across the galaxy..."
-                @bind="searchQuery"
+                @bind="SearchQuery"
                 @oninput="OnSearchInput" />
 
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -2065,29 +1980,29 @@
 
     <div class="content-grid">
         <div class="songs-section">
-            @if (isLoading)
+            @if (IsLoading)
             {
                 <div class="loading">Loading cosmic tracks...</div>
             }
-            else if (filteredSongs.Any())
+            else if (FilteredSongs.Any())
             {
                 <div class="songs-grid">
-                    @foreach (var song in filteredSongs)
+                    @foreach (var song in FilteredSongs)
                     {
-                        <div class="song-card @(currentPlayingId == song.SongId.ToString() ? "playing" : "")" @onclick="() => PlaySong(song.SongId.ToString())">
+                        <div class="song-card @(CurrentPlayingId == song.SongId.ToString() ? "playing" : "")" @onclick="() => PlaySong(song.SongId.ToString())">
                             <div class="song-content">
                                 <div class="song-header">
                                     <div>
                                         <div class="song-title">@song.Title</div>
                                         <div class="song-artist">
-                                            @(songArtists.ContainsKey(song.SongId) ? songArtists[song.SongId] : "Loading...")
-                                            @if (currentUser != null && song.UserId == currentUser.userid)
+                                            @(SongArtists.ContainsKey(song.SongId) ? SongArtists[song.SongId] : "Loading...")
+                                            @if (CurrentUser != null && song.UserId == CurrentUser.userid)
                                             {
-                                                <button class="add-artist-btn" @onclick="() => ShowAddArtistModal(song.SongId)" title="Add Artist">+</button>
+                                                <button class="add-artist-btn" title="Add Artist">+</button>
                                             }
                                         </div>
                                     </div>
-                                    <button class="play-button @(currentPlayingId == song.SongId.ToString() ? "playing" : "")">▶</button>
+                                    <button class="play-button @(CurrentPlayingId == song.SongId.ToString() ? "playing" : "")">▶</button>
                                 </div>
 
                                 <div class="song-meta">
@@ -2105,14 +2020,14 @@
                                 </div>
                             </div>
 
-                            @if (currentPlayingId == song.SongId.ToString())
+                            @if (CurrentPlayingId == song.SongId.ToString())
                             {
                                 <div class="audio-player show">
                                     <div class="audio-controls">
-                                        <button class="audio-play-btn" @onclick="TogglePlay" data-song-id="@song.SongId">▶</button>
+                                        <button class="audio-play-btn" data-song-id="@song.SongId">▶</button>
                                         <div class="audio-info">
                                             <div class="audio-title">@song.Title</div>
-                                            <div class="audio-artist">@(songArtists.ContainsKey(song.SongId) ? songArtists[song.SongId] : "Loading...")</div>
+                                            <div class="audio-artist">@(SongArtists.ContainsKey(song.SongId) ? SongArtists[song.SongId] : "Loading...")</div>
                                         </div>
                                     </div>
 
@@ -2153,9 +2068,9 @@
                         <div class="upload-icon">⬆</div>
                         <div class="upload-text">
                             <div class="upload-main-text">
-                                @if (selectedFile != null)
+                                @if (SelectedFile != null)
                                 {
-                                    @selectedFile.Name
+                                    @SelectedFile.Name
                                 }
                                 else
                                 {
@@ -2163,7 +2078,7 @@
                                 }
                             </div>
                             <div class="upload-sub-text">
-                                @if (selectedFile != null)
+                                @if (SelectedFile != null)
                                 {
                                     @:File selected - Ready to upload!
                                 }
@@ -2185,12 +2100,12 @@
                     <input
                         class="upload-input"
                         placeholder="Song Title"
-                        @bind="uploadTitle" />
+                        @bind="UploadTitle" />
 
                     <select
                         class="upload-input"
-                        @bind="uploadGenreId">
-                        @foreach (var genre in genres)
+                        @bind="UploadGenreId">
+                        @foreach (var genre in Genres)
                         {
                             <option value="@genre.genreID">@genre.name</option>
                         }
@@ -2199,7 +2114,7 @@
                     <input
                         class="upload-input"
                         placeholder="Additional Artists (optional, comma-separated)"
-                        @bind="additionalArtists" />
+                        @bind="AdditionalArtists" />
 
                     <div class="upload-help">
                         💡 Add other artists by username, separated by commas (optional)
@@ -2209,8 +2124,8 @@
                 <button
                     class="upload-button"
                     @onclick="UploadSong"
-                    disabled="@(isUploading || selectedFile == null || string.IsNullOrWhiteSpace(uploadTitle))">
-                    @(isUploading ? "Uploading..." : "Launch to Galaxy")
+                    disabled="@(IsUploading || SelectedFile == null || string.IsNullOrWhiteSpace(UploadTitle))">
+                    @(IsUploading ? "Uploading..." : "Launch to Galaxy")
                 </button>
             </div>
         </div>
