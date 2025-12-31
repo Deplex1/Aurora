@@ -1,2133 +1,415 @@
-﻿@page "/songs"
-@inherits SongsPage
+// =================================================================================
+// Songs.razor - SONGS MANAGEMENT PAGE UI COMPONENT
+// =================================================================================
+// This file contains the HTML UI and CSS styling for the Songs page.
+// Inherits from SongsPage.cs for all backend logic.
+// NO JavaScript - all styling in CSS, basic HTML5 audio controls.
 
+@page "/songs"                      // URL route for this page
+@inherits SongsPage                // Inherits backend logic from SongsPage.cs
+
+// ===== CSS STYLING =====
+// Modern glassmorphism design with gradients and animations
+// Responsive layout that works on all screen sizes
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        background-color: #f0f0f0;
-        margin: 0;
-        padding: 20px;
+    /* ===== CSS CUSTOM PROPERTIES (VARIABLES) ===== */
+    /* Define color scheme for consistent theming across the page */
+    :root {
+        --primary-cyan: #00ffff;        /* Bright cyan for accents and highlights */
+        --primary-blue: #0080ff;        /* Electric blue for primary elements */
+        --primary-purple: #8000ff;       /* Purple for secondary highlights */
+        --primary-pink: #ff0080;         /* Pink for special elements */
+        --secondary-green: #00ff80;      /* Green for success states */
+        --accent-orange: #ff8000;        /* Orange for ratings and stars */
+        --dark-space: #0a0a0f;          /* Dark background for cards */
+        --deep-space: #050509;          /* Very dark background for main page */
+        --glass-bg: rgba(255, 255, 255, 0.05); /* Semi-transparent white for glass effect */
     }
 
-    .container {
-        max-width: 1200px;
-        margin: 0 auto;
+    /* ===== MAIN PAGE LAYOUT ===== */
+    .songs-container {
+        min-height: 100vh;                                           /* Full viewport height */
+        background: linear-gradient(135deg, var(--deep-space) 0%, var(--dark-space) 100%); /* Diagonal gradient background */
+        color: white;                                                /* White text on dark background */
+        padding: 2rem;                                              /* Space around content */
     }
 
-    h1 {
-        color: #333;
-        text-align: center;
+    /* ===== HEADER SECTION ===== */
+    .songs-header {
+        display: flex;                                              /* Flexbox layout */
+        justify-content: space-between;                             /* Title left, button right */
+        align-items: center;                                        /* Vertical center alignment */
+        margin-bottom: 2rem;                                       /* Space below header */
+        padding: 1rem 0;                                          /* Vertical padding */
+        border-bottom: 1px solid var(--glass-bg);                  /* Subtle separator line */
     }
 
-    .search-box {
-        margin-bottom: 20px;
-        text-align: center;
+    .songs-title {
+        font-size: 2.5rem;                                         /* Large title text */
+        font-weight: bold;                                         /* Bold weight */
+        background: linear-gradient(45deg, var(--primary-cyan), var(--primary-blue)); /* Gradient text */
+        -webkit-background-clip: text;                             /* Clip background to text */
+        -webkit-text-fill-color: transparent;                      /* Make text transparent to show gradient */
+        background-clip: text;                                     /* Standard background clip */
     }
 
-    .search-input {
-        padding: 10px;
-        width: 300px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
+    /* ===== UPLOAD BUTTON ===== */
+    .upload-btn {
+        background: linear-gradient(45deg, var(--primary-cyan), var(--primary-blue)); /* Gradient background */
+        border: none;                                              /* Remove default border */
+        padding: 0.75rem 1.5rem;                                  /* Button padding */
+        border-radius: 25px;                                      /* Rounded corners */
+        color: white;                                             /* White text */
+        font-weight: bold;                                        /* Bold text */
+        cursor: pointer;                                          /* Hand cursor on hover */
+        transition: all 0.3s ease;                               /* Smooth transitions */
     }
 
-    .content {
-        display: flex;
-        gap: 20px;
+    .upload-btn:hover {
+        transform: translateY(-2px);                              /* Lift effect on hover */
+        box-shadow: 0 5px 15px rgba(0, 255, 255, 0.3);           /* Glow effect */
     }
 
-    .songs-list {
-        flex: 1;
+    /* ===== SONGS GRID LAYOUT ===== */
+    .songs-grid {
+        display: grid;                                             /* CSS Grid layout */
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Responsive columns */
+        gap: 1.5rem;                                              /* Space between cards */
+        margin-bottom: 2rem;                                      /* Space below grid */
     }
 
+    /* ===== SONG CARDS ===== */
     .song-card {
-        background: white;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 10px;
-        cursor: pointer;
+        background: var(--glass-bg);                              /* Semi-transparent background */
+        backdrop-filter: blur(10px);                              /* Blur effect for glassmorphism */
+        border-radius: 15px;                                      /* Rounded corners */
+        padding: 1.5rem;                                         /* Card padding */
+        border: 1px solid rgba(255, 255, 255, 0.1);              /* Subtle border */
+        transition: all 0.3s ease;                               /* Smooth animations */
     }
 
     .song-card:hover {
-        background: #f9f9f9;
+        transform: translateY(-5px);                              /* Lift effect */
+        box-shadow: 0 10px 30px rgba(0, 255, 255, 0.1);          /* Glow shadow */
     }
 
+    /* ===== SONG INFORMATION ===== */
     .song-title {
-        font-weight: bold;
-        margin-bottom: 5px;
+        font-size: 1.2rem;                                       /* Title size */
+        font-weight: bold;                                       /* Bold text */
+        margin-bottom: 0.5rem;                                  /* Space below title */
+        color: white;                                           /* White text */
     }
 
     .song-artist {
-        color: #666;
-        font-size: 14px;
-        margin-bottom: 5px;
+        color: var(--primary-cyan);                              /* Cyan color for artist */
+        margin-bottom: 1rem;                                    /* Space below artist */
+        font-size: 0.9rem;                                      /* Smaller text */
     }
 
-    .song-duration {
-        color: #999;
-        font-size: 12px;
+    /* ===== RATING SYSTEM ===== */
+    .song-rating {
+        display: flex;                                           /* Flexbox layout */
+        align-items: center;                                     /* Vertical center */
+        gap: 0.5rem;                                            /* Space between elements */
+        margin-bottom: 1rem;                                    /* Space below rating */
     }
 
-    .play-button {
-        background: #007bff;
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 4px;
-        cursor: pointer;
-        margin-top: 10px;
+    .stars {
+        display: flex;                                          /* Flexbox for star alignment */
+        gap: 2px;                                               /* Small gap between stars */
     }
 
-    .play-button:hover {
-        background: #0056b3;
+    .star {
+        color: #ddd;                                            /* Light gray for empty stars */
+        cursor: pointer;                                        /* Hand cursor for clickability */
+        font-size: 1.2rem;                                      /* Star size */
+        transition: color 0.2s ease;                           /* Smooth color transitions */
+    }
+
+    .star.filled {
+        color: var(--accent-orange);                            /* Orange for filled stars */
+    }
+
+    .star:hover {
+        color: var(--accent-orange);                            /* Orange on hover */
+    }
+
+    .rating-text {
+        color: #aaa;                                           /* Gray text for rating number */
+        font-size: 0.9rem;                                     /* Smaller text */
+    }
+
+    /* ===== AUDIO CONTROLS ===== */
+    .audio-controls {
+        margin-top: 1rem;                                       /* Space above controls */
+    }
+
+    /* ===== PROGRESS BAR (TIMELINE) ===== */
+    .progress-container {
+        position: relative;                                     /* For absolute positioning of progress */
+        width: 100%;                                           /* Full width */
+        height: 6px;                                           /* Thin bar height */
+        background: rgba(255, 255, 255, 0.2);                  /* Light background */
+        border-radius: 3px;                                    /* Rounded corners */
+        margin-bottom: 0.5rem;                                /* Space below bar */
+        cursor: pointer;                                       /* Hand cursor for clicking */
+    }
+
+    .progress-bar {
+        height: 100%;                                          /* Fill container height */
+        background: linear-gradient(45deg, var(--primary-cyan), var(--primary-blue)); /* Gradient fill */
+        border-radius: 3px;                                    /* Rounded corners */
+        width: 0%;                                             /* Start empty, fills during playback */
+        transition: width 0.1s ease;                          /* Smooth width changes */
+    }
+
+    /* ===== TIME DISPLAY ===== */
+    .time-display {
+        display: flex;                                         /* Flexbox layout */
+        justify-content: space-between;                         /* Current time left, total time right */
+        font-size: 0.8rem;                                     /* Small text */
+        color: #aaa;                                           /* Gray text */
+        margin-bottom: 0.5rem;                                /* Space below time */
+    }
+
+    /* ===== PLAY/PAUSE BUTTON ===== */
+    .play-btn {
+        background: var(--primary-cyan);                       /* Cyan background */
+        border: none;                                          /* Remove border */
+        width: 40px;                                           /* Fixed size */
+        height: 40px;                                          /* Fixed size */
+        border-radius: 50%;                                    /* Perfect circle */
+        color: white;                                          /* White icon */
+        font-size: 1.2rem;                                     /* Icon size */
+        cursor: pointer;                                       /* Clickable */
+        display: flex;                                         /* Center icon */
+        align-items: center;                                   /* Vertical center */
+        justify-content: center;                               /* Horizontal center */
+        transition: all 0.3s ease;                           /* Smooth transitions */
+    }
+
+    .play-btn:hover {
+        transform: scale(1.1);                                 /* Grow on hover */
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);          /* Glow effect */
+    }
+
+    /* ===== UPLOAD MODAL ===== */
+    .upload-modal {
+        position: fixed;                                        /* Fixed position overlay */
+        top: 0;                                                /* Top of screen */
+        left: 0;                                               /* Left of screen */
+        width: 100%;                                           /* Full width */
+        height: 100%;                                          /* Full height */
+        background: rgba(0, 0, 0, 0.8);                        /* Semi-transparent black overlay */
+        display: flex;                                         /* Flexbox centering */
+        align-items: center;                                   /* Vertical center */
+        justify-content: center;                               /* Horizontal center */
+        z-index: 1000;                                         /* High z-index for modal */
     }
 
     .upload-form {
-        background: white;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 20px;
-        width: 300px;
+        background: var(--dark-space);                         /* Dark background */
+        padding: 2rem;                                         /* Form padding */
+        border-radius: 15px;                                   /* Rounded corners */
+        border: 1px solid var(--glass-bg);                     /* Glass border */
+        width: 90%;                                            /* Responsive width */
+        max-width: 500px;                                      /* Maximum width */
     }
 
-    .upload-form h3 {
-        margin-top: 0;
-        color: #333;
-    }
-
+    /* ===== FORM ELEMENTS ===== */
     .form-group {
-        margin-bottom: 15px;
+        margin-bottom: 1.5rem;                                 /* Space between form fields */
     }
 
     .form-label {
-        display: block;
-        margin-bottom: 5px;
-        font-weight: bold;
+        display: block;                                        /* Block element */
+        margin-bottom: 0.5rem;                                /* Space below label */
+        color: white;                                          /* White text */
+        font-weight: bold;                                     /* Bold labels */
     }
 
     .form-input {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        box-sizing: border-box;
-    }
-
-    .form-select {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        box-sizing: border-box;
-    }
-
-    .upload-button {
-        background: #28a745;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 4px;
-        cursor: pointer;
-        width: 100%;
-    }
-
-    .upload-button:hover {
-        background: #218838;
-    }
-
-    .upload-button:disabled {
-        background: #ccc;
-        cursor: not-allowed;
-    }
-
-    .loading {
-        text-align: center;
-        color: #666;
-        padding: 20px;
-    }
-
-    .audio-player {
-        background: #f8f9fa;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        padding: 15px;
-        margin-top: 10px;
-    }
-
-    .audio-controls {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 10px;
-    }
-
-    .audio-play-btn {
-        background: #007bff;
-        color: white;
-        border: none;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        cursor: pointer;
-    }
-
-    .audio-play-btn:hover {
-        background: #0056b3;
-    }
-
-    .audio-info {
-        flex: 1;
-    }
-
-    .audio-title {
-        font-weight: bold;
-        margin-bottom: 2px;
-    }
-
-    .audio-artist {
-        color: #666;
-        font-size: 12px;
-    }
-
-    .timeline-container {
-        width: 100%;
-        height: 6px;
-        background: #ddd;
-        border-radius: 3px;
-        cursor: pointer;
-        margin: 10px 0;
-    }
-
-    .timeline-fill {
-        height: 100%;
-        background: #007bff;
-        border-radius: 3px;
-    }
-
-    .timeline-time {
-        display: flex;
-        justify-content: space-between;
-        font-size: 12px;
-        color: #666;
-    }
-
-    .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid #ddd;
-    }
-
-    .logo {
-        font-size: 24px;
-        font-weight: bold;
-        color: #333;
-    }
-
-    .nav-buttons {
-        display: flex;
-        gap: 10px;
-    }
-
-    .nav-btn {
-        padding: 8px 16px;
-        background: #6c757d;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-
-    .nav-btn:hover {
-        background: #545b62;
-    }
-
-    /* Custom Cursor */
-    .cursor {
-        position: fixed;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        background: radial-gradient(circle, var(--primary-cyan), transparent);
-        pointer-events: none;
-        z-index: 9999;
-        mix-blend-mode: screen;
-        transition: transform 0.1s ease;
-    }
-
-    .cursor.trail {
-        width: 40px;
-        height: 40px;
-        opacity: 0.3;
-        animation: pulse 2s infinite;
-    }
-
-    @@keyframes pulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.2); }
-    }
-
-    /* Quantum Field Background */
-    body::before {
-        content: "";
-        position: fixed;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background:
-            radial-gradient(circle at 20% 30%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 80% 70%, rgba(128, 0, 255, 0.08) 0%, transparent 50%),
-            radial-gradient(circle at 40% 10%, rgba(255, 0, 128, 0.06) 0%, transparent 50%);
-        animation: quantumShift 20s ease-in-out infinite;
-        z-index: 0;
-        filter: blur(100px);
-    }
-
-    @@keyframes quantumShift {
-        0% { transform: rotate(0deg) scale(1); }
-        25% { transform: rotate(90deg) scale(1.1); }
-        50% { transform: rotate(180deg) scale(0.9); }
-        75% { transform: rotate(270deg) scale(1.05); }
-        100% { transform: rotate(360deg) scale(1); }
-    }
-
-    /* Holographic Grid */
-    body::after {
-        content: "";
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-image:
-            linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
-        background-size: 50px 50px;
-        animation: gridFlow 30s linear infinite;
-        z-index: 1;
-    }
-
-    @@keyframes gridFlow {
-        0% { transform: translate(0, 0); }
-        100% { transform: translate(50px, 50px); }
-    }
-
-    /* Data Streams */
-    .data-stream {
-        position: fixed;
-        width: 2px;
-        height: 100px;
-        background: linear-gradient(to bottom, transparent, var(--primary-cyan), transparent);
-        opacity: 0.6;
-        animation: streamFlow 8s linear infinite;
-        z-index: 2;
-    }
-
-    @@keyframes streamFlow {
-        0% { transform: translateY(-100px); opacity: 0; }
-        10% { opacity: 0.8; }
-        90% { opacity: 0.8; }
-        100% { transform: translateY(100vh); opacity: 0; }
-    }
-
-    /* Neural Network Interface */
-    .neural-nodes {
-        position: fixed;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: 3;
-    }
-
-    .neural-node {
-        position: absolute;
-        width: 4px;
-        height: 4px;
-        background: var(--primary-cyan);
-        border-radius: 50%;
-        opacity: 0.7;
-        animation: neuralPulse 3s ease-in-out infinite;
-    }
-
-    .neural-node::before {
-        content: "";
-        position: absolute;
-        width: 20px;
-        height: 1px;
-        background: linear-gradient(90deg, var(--primary-cyan), transparent);
-        transform-origin: left center;
-        animation: neuralConnect 4s ease-in-out infinite;
-    }
-
-    @@keyframes neuralPulse {
-        0%, 100% { transform: scale(1); opacity: 0.7; }
-        50% { transform: scale(1.5); opacity: 1; }
-    }
-
-    @@keyframes neuralConnect {
-        0%, 100% { transform: rotate(0deg) scaleX(0); }
-        50% { transform: rotate(45deg) scaleX(1); }
-    }
-
-    .page-container {
-        position: relative;
-        z-index: 10;
-        width: 100%;
-        min-height: 100vh;
-        padding: 30px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        transform-style: preserve-3d;
-    }
-
-    /* Holographic Header */
-    .header {
-        width: 100%;
-        max-width: 1400px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 50px;
-        padding: 25px 40px;
-        background: var(--glass-bg);
-        backdrop-filter: blur(20px);
-        border: 1px solid var(--glass-border);
-        border-radius: 25px;
-        box-shadow:
-            0 8px 32px rgba(0, 0, 0, 0.3),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .header::before {
-        content: "";
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: conic-gradient(
-            from 0deg,
-            transparent,
-            rgba(0, 255, 255, 0.1),
-            transparent,
-            rgba(128, 0, 255, 0.1),
-            transparent
-        );
-        animation: hologramScan 8s linear infinite;
-    }
-
-    @@keyframes hologramScan {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    .logo {
-        font-size: 36px;
-        font-weight: 900;
-        background: linear-gradient(45deg,
-            var(--primary-cyan),
-            var(--primary-blue),
-            var(--primary-purple),
-            var(--primary-pink)
-        );
-        background-size: 400% 400%;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        text-shadow:
-            0 0 20px rgba(0, 255, 255, 0.5),
-            0 0 40px rgba(0, 255, 255, 0.3);
-        cursor: pointer;
-        transition: all 0.4s ease;
-        animation: logoGlow 3s ease-in-out infinite alternate;
-        position: relative;
-        z-index: 2;
-    }
-
-    @@keyframes logoGlow {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
-
-    .logo:hover {
-        transform: scale(1.1) rotateY(5deg);
-        text-shadow:
-            0 0 30px rgba(0, 255, 255, 0.8),
-            0 0 60px rgba(0, 255, 255, 0.6),
-            0 0 90px rgba(0, 255, 255, 0.4);
-    }
-
-    .nav-buttons {
-        display: flex;
-        gap: 20px;
-        position: relative;
-        z-index: 2;
-    }
-
-    .nav-btn {
-        padding: 12px 24px;
-        border-radius: 15px;
-        border: 1px solid var(--glass-border);
-        background: var(--glass-bg);
-        color: #ffffff;
-        font-weight: 600;
-        font-size: 14px;
-        cursor: pointer;
-        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        backdrop-filter: blur(10px);
-        position: relative;
-        overflow: hidden;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    .nav-btn::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.2), transparent);
-        transition: left 0.5s ease;
-    }
-
-    .nav-btn:hover {
-        transform: translateY(-3px) scale(1.05);
-        border-color: var(--primary-cyan);
-        box-shadow:
-            0 10px 30px rgba(0, 255, 255, 0.3),
-            inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    }
-
-    .nav-btn:hover::before {
-        left: 100%;
-    }
-
-    /* Quantum Search Interface */
-    .search-section {
-        width: 100%;
-        max-width: 900px;
-        text-align: center;
-        margin-bottom: 60px;
-        position: relative;
-    }
-
-    .search-container {
-        position: relative;
-        margin-bottom: 30px;
-    }
-
-    .search-bar {
-        width: 100%;
-        padding: 20px 30px;
-        border-radius: 50px;
-        border: 2px solid var(--glass-border);
-        outline: none;
-        font-size: 18px;
-        background: var(--glass-bg);
-        color: #ffffff;
-        backdrop-filter: blur(25px);
-        box-shadow:
-            0 8px 32px rgba(0, 0, 0, 0.3),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1),
-            0 0 0 1px rgba(255, 255, 255, 0.05);
-        transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        position: relative;
-        overflow: hidden;
-        font-family: 'Orbitron', monospace;
-    }
-
-    .search-bar::before {
-        content: "";
-        position: absolute;
-        top: -2px;
-        left: -2px;
-        right: -2px;
-        bottom: -2px;
-        background: conic-gradient(
-            from 0deg,
-            var(--primary-cyan),
-            var(--primary-blue),
-            var(--primary-purple),
-            var(--primary-pink),
-            var(--primary-cyan)
-        );
-        border-radius: 50px;
-        opacity: 0;
-        transition: opacity 0.4s ease;
-        z-index: -1;
-    }
-
-    .search-bar::placeholder {
-        color: rgba(255, 255, 255, 0.5);
-        font-style: italic;
-    }
-
-    .search-bar:focus {
-        transform: scale(1.02);
-        border-color: var(--primary-cyan);
-        box-shadow:
-            0 20px 60px rgba(0, 255, 255, 0.3),
-            0 0 30px rgba(0, 255, 255, 0.2),
-            inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    }
-
-    .search-bar:focus::before {
-        opacity: 0.3;
-        animation: borderGlow 2s linear infinite;
-    }
-
-    @@keyframes borderGlow {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    /* Search Icon Animation */
-    .search-icon {
-        position: absolute;
-        right: 20px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 24px;
-        height: 24px;
-        stroke: var(--primary-cyan);
-        stroke-width: 2;
-        fill: none;
-        transition: all 0.3s ease;
-    }
-
-    .search-bar:focus + .search-icon {
-        stroke: var(--secondary-green);
-        animation: searchPulse 1.5s ease-in-out infinite;
-    }
-
-    @@keyframes searchPulse {
-        0%, 100% { transform: translateY(-50%) scale(1); }
-        50% { transform: translateY(-50%) scale(1.1); }
-    }
-
-    .subtitle {
-        font-size: 14px;
-        color: var(--primary-cyan);
-        margin-top: 20px;
-        font-weight: 300;
-        text-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        opacity: 0.8;
-        animation: subtitleFloat 4s ease-in-out infinite;
-    }
-
-    @@keyframes subtitleFloat {
-        0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-5px); }
-    }
-
-    /* Holographic Content Grid */
-    .content-grid {
-        display: grid;
-        grid-template-columns: 1fr 350px;
-        gap: 40px;
-        width: 100%;
-        max-width: 1400px;
-        perspective: 2000px;
-    }
-
-    .songs-section {
-        display: flex;
-        flex-direction: column;
-        gap: 30px;
-    }
-
-    .songs-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-        gap: 30px;
-        width: 100%;
-    }
-
-    /* Revolutionary Holographic Song Cards */
-    .song-card {
-        position: relative;
-        background: var(--glass-bg);
-        border-radius: 25px;
-        padding: 30px;
-        backdrop-filter: blur(30px);
-        border: 1px solid var(--glass-border);
-        box-shadow:
-            0 8px 32px rgba(0, 0, 0, 0.3),
-            0 0 0 1px rgba(255, 255, 255, 0.05),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        cursor: pointer;
-        overflow: hidden;
-        transform-style: preserve-3d;
-        min-height: 200px;
-    }
-
-    .song-card::before {
-        content: "";
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: conic-gradient(
-            from 0deg,
-            rgba(0, 255, 255, 0.1),
-            rgba(0, 128, 255, 0.1),
-            rgba(128, 0, 255, 0.1),
-            rgba(255, 0, 128, 0.1),
-            rgba(0, 255, 255, 0.1)
-        );
-        opacity: 0;
-        transition: opacity 0.6s ease;
-        animation: hologramRotate 12s linear infinite;
-        z-index: 0;
-    }
-
-    @@keyframes hologramRotate {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    .song-card::after {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(
-            45deg,
-            transparent 25%,
-            rgba(0, 255, 255, 0.05) 25%,
-            rgba(0, 255, 255, 0.05) 50%,
-            transparent 50%
-        );
-        background-size: 20px 20px;
-        opacity: 0;
-        transition: opacity 0.4s ease;
-        animation: dataFlow 8s linear infinite;
-    }
-
-    @@keyframes dataFlow {
-        0% { background-position: 0 0; }
-        100% { background-position: 20px 20px; }
-    }
-
-    .song-card:hover {
-        transform: translateY(-15px) rotateX(10deg) rotateY(5deg) scale(1.02);
-        box-shadow:
-            0 25px 80px rgba(0, 0, 0, 0.4),
-            0 0 60px rgba(0, 255, 255, 0.3),
-            0 0 120px rgba(0, 128, 255, 0.2),
-            inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        border-color: var(--primary-cyan);
-    }
-
-    .song-card:hover::before {
-        opacity: 0.8;
-    }
-
-    .song-card:hover::after {
-        opacity: 0.6;
-    }
-
-    .song-content {
-        position: relative;
-        z-index: 2;
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-    }
-
-    .song-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 20px;
-    }
-
-    .song-title {
-        font-size: 20px;
-        font-weight: 700;
-        color: #ffffff;
-        margin-bottom: 8px;
-        text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
-        line-height: 1.2;
-        flex: 1;
-    }
-
-    .song-artist {
-        font-size: 14px;
-        color: var(--primary-cyan);
-        margin-bottom: 15px;
-        font-weight: 500;
-        text-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
-        opacity: 0.9;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .add-artist-btn {
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        border: 1px solid var(--primary-cyan);
-        background: rgba(0, 255, 255, 0.1);
-        color: var(--primary-cyan);
-        font-size: 12px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0.7;
-    }
-
-    .add-artist-btn:hover {
-        opacity: 1;
-        transform: scale(1.1);
-        background: rgba(0, 255, 255, 0.2);
-        box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-    }
-
-    .song-meta {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: auto;
-    }
-
-    .song-duration {
-        font-size: 12px;
-        color: rgba(255, 255, 255, 0.7);
-        font-family: 'Orbitron', monospace;
-        text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
-    }
-
-    /* Quantum Play Button */
-    .play-button {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        border: 2px solid var(--primary-cyan);
-        background: radial-gradient(circle, rgba(0, 255, 255, 0.1), transparent);
-        color: var(--primary-cyan);
-        font-size: 18px;
-        cursor: pointer;
-        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        position: relative;
-        overflow: hidden;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
-    }
-
-    .play-button::before {
-        content: "";
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 0;
-        height: 0;
-        background: radial-gradient(circle, var(--primary-cyan), transparent);
-        border-radius: 50%;
-        transform: translate(-50%, -50%);
-        transition: all 0.4s ease;
-    }
-
-    .play-button:hover {
-        transform: scale(1.1) rotate(5deg);
-        border-color: var(--secondary-green);
-        box-shadow: 0 0 40px rgba(0, 255, 255, 0.6), 0 0 80px rgba(0, 255, 80, 0.4);
-        color: var(--secondary-green);
-    }
-
-    .play-button:hover::before {
-        width: 120px;
-        height: 120px;
-    }
-
-    .play-button.playing {
-        border-color: var(--accent-orange);
-        color: var(--accent-orange);
-        animation: playingPulse 1.5s ease-in-out infinite;
-    }
-
-    @@keyframes playingPulse {
-        0%, 100% { box-shadow: 0 0 20px rgba(255, 128, 0, 0.4); }
-        50% { box-shadow: 0 0 40px rgba(255, 128, 0, 0.8), 0 0 80px rgba(255, 128, 0, 0.4); }
-    }
-
-    /* Sound Wave Visualization */
-    .sound-wave {
-        position: absolute;
-        bottom: 20px;
-        left: 20px;
-        right: 20px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        gap: 2px;
-        opacity: 0;
-        transition: opacity 0.4s ease;
-    }
-
-    .song-card:hover .sound-wave {
-        opacity: 0.8;
-    }
-
-    .wave-bar {
-        width: 3px;
-        background: var(--primary-cyan);
-        border-radius: 2px;
-        animation: waveIdle 2s ease-in-out infinite;
-    }
-
-    .wave-bar:nth-child(1) { animation-delay: 0s; height: 15px; }
-    .wave-bar:nth-child(2) { animation-delay: 0.1s; height: 25px; }
-    .wave-bar:nth-child(3) { animation-delay: 0.2s; height: 10px; }
-    .wave-bar:nth-child(4) { animation-delay: 0.3s; height: 30px; }
-    .wave-bar:nth-child(5) { animation-delay: 0.4s; height: 18px; }
-    .wave-bar:nth-child(6) { animation-delay: 0.5s; height: 22px; }
-    .wave-bar:nth-child(7) { animation-delay: 0.6s; height: 12px; }
-    .wave-bar:nth-child(8) { animation-delay: 0.7s; height: 28px; }
-
-    @@keyframes waveIdle {
-        0%, 100% { transform: scaleY(0.5); opacity: 0.4; }
-        50% { transform: scaleY(1); opacity: 1; }
-    }
-
-    .song-card.playing .wave-bar {
-        animation: wavePlaying 0.5s ease-in-out infinite alternate;
-        background: var(--accent-orange);
-    }
-
-    @@keyframes wavePlaying {
-        0% { transform: scaleY(0.3); }
-        100% { transform: scaleY(1.2); }
-    }
-
-    /* Quantum Audio Player */
-    .audio-player {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: linear-gradient(180deg, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.6));
-        backdrop-filter: blur(20px);
-        border-top: 1px solid var(--glass-border);
-        padding: 20px;
-        transform: translateY(100%);
-        transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        opacity: 0;
-        z-index: 3;
-    }
-
-    .audio-player.show {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    .audio-player::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: linear-gradient(90deg, var(--primary-cyan), var(--primary-purple), var(--accent-orange));
-        animation: progressGlow 3s ease-in-out infinite;
-    }
-
-    @@keyframes progressGlow {
-        0%, 100% { opacity: 0.6; }
-        50% { opacity: 1; }
-    }
-
-    .audio-controls {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        margin-bottom: 15px;
-    }
-
-    .audio-play-btn {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        border: 2px solid var(--primary-cyan);
-        background: radial-gradient(circle, rgba(0, 255, 255, 0.2), transparent);
-        color: var(--primary-cyan);
-        font-size: 18px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .audio-play-btn:hover {
-        transform: scale(1.1);
-        box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
-    }
-
-    .audio-play-btn.playing {
-        background: rgba(0, 255, 128, 0.3);
-        box-shadow: 0 0 25px rgba(0, 255, 128, 0.8);
-        animation: playingPulse 1.5s ease-in-out infinite;
-    }
-
-    @@keyframes playingPulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-    }
-
-    .audio-info {
-        flex: 1;
-        color: #ffffff;
-    }
-
-    .audio-title {
-        font-size: 16px;
-        font-weight: 600;
-        margin-bottom: 4px;
-        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-    }
-
-    .audio-artist {
-        font-size: 12px;
-        color: var(--primary-cyan);
-        opacity: 0.8;
-    }
-
-    /* Audio Timeline */
-    .audio-timeline {
-        width: 100%;
-        margin: 15px 0;
-    }
-
-    .timeline-container {
-        position: relative;
-        width: 100%;
-        height: 6px;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 3px;
-        cursor: pointer;
-        margin-bottom: 8px;
-        overflow: hidden;
-    }
-
-    .timeline-progress {
-        width: 100%;
-        height: 100%;
-        position: relative;
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 3px;
-    }
-
-    .timeline-fill {
-        height: 100%;
-        background: linear-gradient(90deg, var(--primary-cyan), var(--secondary-green));
-        border-radius: 3px;
-        position: relative;
-        transition: width 0.1s ease;
-        box-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
-    }
-
-    .timeline-fill::before {
-        content: "";
-        position: absolute;
-        right: -6px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 12px;
-        height: 12px;
-        background: var(--primary-cyan);
-        border-radius: 50%;
-        box-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
-        animation: progressGlow 2s ease-in-out infinite;
-    }
-
-    .timeline-time {
-        display: flex;
-        justify-content: space-between;
-        font-size: 11px;
-        color: rgba(255, 255, 255, 0.7);
-        font-family: 'Orbitron', monospace;
-        text-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
-    }
-
-    .timeline-container:hover .timeline-fill {
-        box-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
-    }
-
-    .timeline-container:hover .timeline-fill::before {
-        animation-duration: 1s;
-        box-shadow: 0 0 20px rgba(0, 255, 255, 1);
-    }
-
-    /* Enhanced timeline interactivity */
-    .timeline-container {
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .timeline-container:hover {
-        transform: scaleY(1.1);
-    }
-
-    .timeline-container:hover .timeline-progress {
-        background: rgba(255, 255, 255, 0.15);
-        box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
-    }
-
-    .timeline-container:active .timeline-progress {
-        transform: scaleY(1.05);
-    }
-
-    /* Visual feedback for seeking */
-    .timeline-container.seeking .timeline-progress {
-        background: rgba(255, 128, 0, 0.2);
-    }
-
-    .timeline-container.seeking .timeline-fill {
-        background: linear-gradient(90deg, var(--accent-orange), var(--primary-cyan));
-        box-shadow: 0 0 15px rgba(255, 128, 0, 0.8);
-    }
-
-    .audio-player audio {
-        display: none;
-    }
-
-    /* Neural Upload Interface */
-    .sidebar {
-        position: sticky;
-        top: 30px;
-        height: fit-content;
-    }
-
-    .upload-section {
-        width: 100%;
-        background: var(--glass-bg);
-        border-radius: 30px;
-        padding: 30px;
-        backdrop-filter: blur(30px);
-        border: 1px solid var(--glass-border);
-        box-shadow:
-            0 8px 32px rgba(0, 0, 0, 0.3),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .upload-section::before {
-        content: "";
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(
-            circle at 30% 70%,
-            rgba(0, 255, 255, 0.1) 0%,
-            transparent 50%
-        );
-        animation: uploadGlow 6s ease-in-out infinite alternate;
-    }
-
-    @@keyframes uploadGlow {
-        0% { transform: rotate(0deg) scale(1); }
-        100% { transform: rotate(180deg) scale(1.1); }
-    }
-
-    .upload-title {
-        font-size: 24px;
-        font-weight: 700;
-        background: linear-gradient(45deg, var(--primary-cyan), var(--primary-purple));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-        text-align: center;
-        margin-bottom: 25px;
-        position: relative;
-        z-index: 2;
-    }
-
-    /* Spectacular File Upload Zone */
-    .file-upload-container {
-        position: relative;
-        margin-bottom: 30px;
-        z-index: 2;
-    }
-
-    .file-input-zone {
-        width: 100%;
-        min-height: 140px;
-        border-radius: 25px;
-        border: 2px dashed var(--glass-border);
-        background:
-            radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.03) 0%, transparent 70%),
-            linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, rgba(0, 255, 255, 0.01) 100%);
-        position: relative;
-        overflow: hidden;
-        cursor: pointer;
-        transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        backdrop-filter: blur(20px);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 15px;
-        padding: 25px;
-    }
-
-    .file-input-zone::before {
-        content: "";
-        position: absolute;
-        top: -2px;
-        left: -2px;
-        right: -2px;
-        bottom: -2px;
-        background: conic-gradient(
-            from 0deg,
-            rgba(0, 255, 255, 0.2),
-            rgba(128, 0, 255, 0.2),
-            rgba(255, 0, 128, 0.2),
-            rgba(0, 255, 255, 0.2)
-        );
-        border-radius: 27px;
-        opacity: 0;
-        transition: opacity 0.4s ease;
-        z-index: -1;
-    }
-
-    .file-input-zone::after {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background:
-            radial-gradient(circle at 20% 80%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, rgba(128, 0, 255, 0.08) 0%, transparent 50%),
-            radial-gradient(circle at 40% 40%, rgba(255, 0, 128, 0.06) 0%, transparent 50%);
-        opacity: 0;
-        transition: opacity 0.4s ease;
-        animation: uploadParticles 6s ease-in-out infinite;
-    }
-
-    @@keyframes uploadParticles {
-        0%, 100% { opacity: 0; transform: scale(1); }
-        50% { opacity: 0.3; transform: scale(1.05); }
-    }
-
-    .file-input-zone:hover {
-        transform: translateY(-5px) scale(1.02);
-        border-color: var(--primary-cyan);
-        box-shadow:
-            0 20px 60px rgba(0, 255, 255, 0.2),
-            0 0 40px rgba(0, 255, 255, 0.1),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    }
-
-    .file-input-zone:hover::before {
-        opacity: 0.6;
-        animation: borderRotate 3s linear infinite;
-    }
-
-    .file-input-zone:hover::after {
-        opacity: 0.8;
-    }
-
-    @@keyframes borderRotate {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    .file-input-zone.dragover {
-        transform: translateY(-8px) scale(1.03);
-        border-color: var(--secondary-green);
-        background:
-            radial-gradient(circle at 50% 50%, rgba(0, 255, 128, 0.1) 0%, transparent 70%),
-            linear-gradient(135deg, rgba(0, 255, 128, 0.05) 0%, rgba(0, 255, 255, 0.02) 100%);
-        box-shadow:
-            0 25px 80px rgba(0, 255, 128, 0.3),
-            0 0 60px rgba(0, 255, 128, 0.2),
-            inset 0 1px 0 rgba(255, 255, 255, 0.15);
-    }
-
-    .file-input-zone.dragover::before {
-        opacity: 0.8;
-        animation: borderRotateFast 1s linear infinite;
-    }
-
-    @@keyframes borderRotateFast {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    /* Upload Icon */
-    .upload-icon {
-        width: 60px;
-        height: 60px;
-        background: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 24px;
-        box-shadow: 0 0 30px rgba(0, 255, 255, 0.4);
-        transition: all 0.4s ease;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .upload-icon::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: radial-gradient(circle, rgba(255, 255, 255, 0.3), transparent);
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-
-    .file-input-zone:hover .upload-icon {
-        transform: scale(1.1) rotate(5deg);
-        box-shadow: 0 0 40px rgba(0, 255, 255, 0.6), 0 0 80px rgba(128, 0, 255, 0.4);
-    }
-
-    .file-input-zone:hover .upload-icon::before {
-        opacity: 1;
-    }
-
-    .file-input-zone.dragover .upload-icon {
-        background: linear-gradient(135deg, var(--secondary-green), var(--primary-cyan));
-        box-shadow: 0 0 50px rgba(0, 255, 128, 0.6);
-        animation: iconPulse 0.8s ease-in-out infinite;
-    }
-
-    @@keyframes iconPulse {
-        0%, 100% { transform: scale(1.1) rotate(5deg); }
-        50% { transform: scale(1.2) rotate(-5deg); }
-    }
-
-    /* Upload Text */
-    .upload-text {
-        text-align: center;
-        color: #ffffff;
-        font-family: 'Orbitron', monospace;
-        font-size: 14px;
-        font-weight: 500;
-    }
-
-    .upload-main-text {
-        font-size: 16px;
-        font-weight: 700;
-        margin-bottom: 5px;
-        background: linear-gradient(90deg, var(--primary-cyan), var(--primary-purple));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
-    }
-
-    .upload-sub-text {
-        font-size: 12px;
-        opacity: 0.7;
-        color: rgba(255, 255, 255, 0.8);
-    }
-
-    .file-input-zone.dragover .upload-main-text {
-        color: var(--secondary-green);
-        text-shadow: 0 0 15px rgba(0, 255, 128, 0.5);
-    }
-
-    /* Hidden File Input */
-    .file-input {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        opacity: 0;
-        cursor: pointer;
-        z-index: 10;
-    }
-
-    .upload-form {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        position: relative;
-        z-index: 2;
-    }
-
-    .upload-input {
-        padding: 15px 18px;
-        border-radius: 15px;
-        border: 1px solid var(--glass-border);
-        background: rgba(255, 255, 255, 0.05);
-        color: #ffffff;
-        font-size: 14px;
-        backdrop-filter: blur(15px);
-        transition: all 0.3s ease;
-        font-family: 'Orbitron', monospace;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .upload-input::placeholder {
-        color: rgba(255, 255, 255, 0.5);
-        font-style: italic;
-    }
-
-    .upload-input:focus {
-        outline: none;
-        border-color: var(--primary-cyan);
-        box-shadow:
-            0 0 20px rgba(0, 255, 255, 0.3),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        transform: translateY(-2px);
-    }
-
-    .upload-input:focus::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(45deg, rgba(0, 255, 255, 0.1), transparent);
-        animation: inputGlow 2s ease-in-out infinite alternate;
-    }
-
-    @@keyframes inputGlow {
-        0% { opacity: 0.3; }
-        100% { opacity: 0.8; }
-    }
-
-    /* Quantum Select Dropdown Styling */
-    .upload-input select {
-        background: transparent;
-        color: #ffffff;
-        border: none;
-        width: 100%;
-        cursor: pointer;
-        font-family: 'Orbitron', monospace;
-        font-size: 14px;
-        appearance: none;
-        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300ffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
-        background-repeat: no-repeat;
-        background-position: right 10px center;
-        background-size: 16px;
-        padding-right: 40px;
-    }
-
-    .upload-input select:focus {
-        outline: none;
-    }
-
-    .upload-input select option {
-        background: var(--dark-space);
-        color: #ffffff;
-        padding: 12px;
-        font-family: 'Orbitron', monospace;
-        font-size: 14px;
-        border: 1px solid var(--glass-border);
-    }
-
-    .upload-input select option:hover {
-        background: rgba(0, 255, 255, 0.1);
-    }
-
-    /* Quantum Upload Button */
-    .upload-button {
-        padding: 15px 35px;
-        border-radius: 25px;
-        border: 2px solid var(--primary-purple);
-        background: linear-gradient(135deg,
-            rgba(128, 0, 255, 0.2),
-            rgba(0, 255, 170, 0.2)
-        );
-        color: #ffffff;
-        font-weight: 700;
-        font-size: 14px;
-        cursor: pointer;
-        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        position: relative;
-        overflow: hidden;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 4px 20px rgba(128, 0, 255, 0.3);
-    }
-
-    .upload-button::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg,
-            transparent,
-            rgba(0, 255, 255, 0.4),
-            rgba(128, 0, 255, 0.4),
-            transparent
-        );
-        transition: left 0.6s ease;
-    }
-
-    .upload-button:hover {
-        transform: translateY(-3px) scale(1.05);
-        border-color: var(--primary-cyan);
-        box-shadow:
-            0 8px 30px rgba(128, 0, 255, 0.5),
-            0 0 40px rgba(0, 255, 255, 0.3);
-    }
-
-    .upload-button:hover::before {
-        left: 100%;
-    }
-
-    .upload-button:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
-    }
-
-    .upload-help {
-        font-size: 11px;
-        color: rgba(0, 255, 255, 0.7);
-        margin-top: -10px;
-        margin-bottom: 15px;
-        text-align: center;
-        font-family: 'Orbitron', monospace;
-        text-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
-    }
-
-    .upload-button.uploading {
-        border-color: var(--accent-orange);
-        background: linear-gradient(135deg,
-            rgba(255, 128, 0, 0.3),
-            rgba(255, 0, 128, 0.3)
-        );
-        animation: uploadingPulse 1s ease-in-out infinite;
-    }
-
-    @@keyframes uploadingPulse {
-        0%, 100% { opacity: 0.8; }
-        50% { opacity: 1; }
-    }
-
-    /* Advanced Loading States */
-    .loading {
-        text-align: center;
-        color: var(--primary-cyan);
-        font-size: 16px;
-        margin: 40px 0;
-        text-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
-        font-family: 'Orbitron', monospace;
-        position: relative;
-    }
-
-    .loading::before {
-        content: "";
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 30px;
-        height: 30px;
-        margin: -15px 0 0 -15px;
-        border: 2px solid transparent;
-        border-top: 2px solid var(--primary-cyan);
-        border-radius: 50%;
-        animation: loadingSpin 1s linear infinite;
-    }
-
-    @@keyframes loadingSpin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    .no-results {
-        text-align: center;
-        color: rgba(255, 255, 255, 0.6);
-        font-size: 20px;
-        margin-top: 60px;
-        text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
-        font-family: 'Orbitron', monospace;
-        grid-column: 1 / -1;
-        position: relative;
-    }
-
-    .no-results::before {
-        content: "⚠";
-        position: absolute;
-        top: -30px;
-        left: 50%;
-        transform: translateX(-50%);
-        font-size: 24px;
-        opacity: 0.5;
-        animation: warningFloat 3s ease-in-out infinite;
-    }
-
-    @@keyframes warningFloat {
-        0%, 100% { transform: translateX(-50%) translateY(0px); }
-        50% { transform: translateX(-50%) translateY(-10px); }
-    }
-
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-        background: var(--deep-space);
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: linear-gradient(180deg, var(--primary-cyan), var(--primary-purple));
-        border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(180deg, var(--secondary-green), var(--accent-orange));
-    }
-
-    /* Mobile Quantum Adaptation */
-    @@media (max-width: 768px) {
-        .content-grid {
-            grid-template-columns: 1fr;
-            gap: 30px;
-        }
-
-        .header {
-            flex-direction: column;
-            gap: 20px;
-            padding: 20px;
-        }
-
-        .nav-buttons {
-            width: 100%;
-            justify-content: center;
-        }
-
-        .songs-grid {
-            grid-template-columns: 1fr;
-            gap: 20px;
-        }
-
-        .song-card {
-            padding: 25px;
-            min-height: 180px;
-        }
-
-        .upload-section {
-            padding: 25px;
-        }
-
-        .search-bar {
-            padding: 16px 20px;
-            font-size: 16px;
-        }
-    }
-
-    /* Accessibility and Performance */
-    @@media (prefers-reduced-motion: reduce) {
-        *, *::before, *::after {
-            animation-duration: 0.01ms !important;
-            animation-iteration-count: 1 !important;
-            transition-duration: 0.01ms !important;
-        }
+        width: 100%;                                           /* Full width */
+        padding: 0.75rem;                                      /* Input padding */
+        border: 1px solid rgba(255, 255, 255, 0.2);            /* Light border */
+        border-radius: 8px;                                    /* Rounded corners */
+        background: rgba(255, 255, 255, 0.05);                 /* Semi-transparent background */
+        color: white;                                          /* White text */
+        font-size: 1rem;                                       /* Standard text size */
+    }
+
+    .form-input:focus {
+        outline: none;                                         /* Remove default outline */
+        border-color: var(--primary-cyan);                     /* Cyan border on focus */
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);          /* Glow effect */
+    }
+
+    /* ===== FORM BUTTONS ===== */
+    .form-buttons {
+        display: flex;                                         /* Flexbox layout */
+        gap: 1rem;                                             /* Space between buttons */
+        justify-content: flex-end;                             /* Right alignment */
+    }
+
+    .cancel-btn {
+        background: rgba(255, 255, 255, 0.1);                  /* Semi-transparent background */
+        border: 1px solid rgba(255, 255, 255, 0.2);            /* Light border */
+        padding: 0.75rem 1.5rem;                              /* Button padding */
+        border-radius: 8px;                                    /* Rounded corners */
+        color: white;                                          /* White text */
+        cursor: pointer;                                       /* Clickable */
+    }
+
+    .submit-btn {
+        background: linear-gradient(45deg, var(--primary-cyan), var(--primary-blue)); /* Gradient background */
+        border: none;                                          /* Remove border */
+        padding: 0.75rem 1.5rem;                              /* Button padding */
+        border-radius: 8px;                                    /* Rounded corners */
+        color: white;                                          /* White text */
+        font-weight: bold;                                     /* Bold text */
+        cursor: pointer;                                       /* Clickable */
+    }
+
+    .submit-btn:hover {
+        transform: translateY(-2px);                           /* Lift effect */
+        box-shadow: 0 5px 15px rgba(0, 255, 255, 0.3);        /* Glow effect */
     }
 </style>
 
-<script>
-
-
-            cursor.style.left = cursorX + 'px';
-            cursor.style.top = cursorY + 'px';
-
-            cursorTrail.style.left = trailX + 'px';
-            cursorTrail.style.top = trailY + 'px';
-
-            requestAnimationFrame(updateCursor);
-        }
-        updateCursor();
-
-        function createDataStream() {
-            const stream = document.createElement('div');
-            stream.className = 'data-stream';
-            stream.style.left = Math.random() * 100 + '%';
-            stream.style.animationDuration = (3 + Math.random() * 4) + 's';
-            stream.style.animationDelay = Math.random() * 8 + 's';
-            document.body.appendChild(stream);
-
-            setTimeout(() => {
-                if (stream.parentNode) {
-                    stream.parentNode.removeChild(stream);
-                }
-            }, 8000);
-        }
-
-        setInterval(createDataStream, 2000);
-
-        // Holographic Card Interactions
-        document.querySelectorAll('.song-card').forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                const soundWave = this.querySelector('.sound-wave');
-                if (soundWave) {
-                    soundWave.style.opacity = '0.8';
-                }
-            });
-
-            card.addEventListener('mouseleave', function() {
-                const soundWave = this.querySelector('.sound-wave');
-                if (soundWave) {
-                    soundWave.style.opacity = '0';
-                }
-            });
-        });
-
-        // Quantum File Upload Zone
-        const fileInputs = document.querySelectorAll('.file-input');
-        fileInputs.forEach(input => {
-            input.addEventListener('dragover', function(e) {
-                e.preventDefault();
-                this.classList.add('dragover');
-            });
-
-            input.addEventListener('dragleave', function(e) {
-                e.preventDefault();
-                this.classList.remove('dragover');
-            });
-
-            input.addEventListener('drop', function(e) {
-                e.preventDefault();
-                this.classList.remove('dragover');
-            });
-        });
-
-        // Audio Timeline Functionality
-        function initializeAudioPlayers() {
-            // Handle play/pause buttons
-            document.querySelectorAll('.audio-play-btn').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const songId = this.getAttribute('data-song-id');
-                    const audio = document.getElementById(`audio-${songId}`);
-
-                    if (audio.paused) {
-                        // Pause all other audio elements
-                        document.querySelectorAll('audio').forEach(a => {
-                            if (a !== audio) {
-                                a.pause();
-                                a.currentTime = 0;
-                            }
-                        });
-
-                        audio.play();
-                        this.textContent = '⏸';
-                        this.classList.add('playing');
-                    } else {
-                        audio.pause();
-                        this.textContent = '▶';
-                        this.classList.remove('playing');
-                    }
-                });
-            });
-
-            // Handle timeline clicks - improved seek functionality
-            document.querySelectorAll('.timeline-container').forEach(container => {
-                container.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    const songId = this.querySelector('.timeline-progress').id.replace('progress-', '');
-                    const audio = document.getElementById(`audio-${songId}`);
-                    const progress = this.querySelector('.timeline-progress');
-                    const rect = progress.getBoundingClientRect();
-
-                    // Calculate click position relative to progress bar
-                    const clickX = e.clientX - rect.left;
-                    const percentage = Math.max(0, Math.min(1, clickX / rect.width));
-
-                    // Set audio current time
-                    if (audio.duration && !isNaN(audio.duration)) {
-                        audio.currentTime = audio.duration * percentage;
-
-                        // Update progress bar immediately
-                        const fill = document.getElementById(`fill-${songId}`);
-                        if (fill) {
-                            fill.style.width = `${percentage * 100}%`;
-                        }
-
-                        // Update current time display
-                        const currentTime = document.getElementById(`current-${songId}`);
-                        if (currentTime) {
-                            const currentMinutes = Math.floor(audio.currentTime / 60);
-                            const currentSeconds = Math.floor(audio.currentTime % 60);
-                            currentTime.textContent = `${currentMinutes}:${currentSeconds.toString().padStart(2, '0')}`;
-                        }
-                    }
-                });
-
-                // Add mouse drag support for continuous seeking
-                let isDragging = false;
-                let currentContainer = null;
-
-                container.addEventListener('mousedown', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    isDragging = true;
-                    currentContainer = this;
-                    this.classList.add('seeking');
-
-                    // Perform initial seek
-                    performSeek(this, e);
-                });
-
-                document.addEventListener('mousemove', function(e) {
-                    if (!isDragging || !currentContainer) return;
-
-                    performSeek(currentContainer, e);
-                });
-
-                document.addEventListener('mouseup', function() {
-                    if (isDragging && currentContainer) {
-                        currentContainer.classList.remove('seeking');
-                    }
-                    isDragging = false;
-                    currentContainer = null;
-                });
-
-                // Helper function for seeking
-                function performSeek(container, e) {
-                    const songId = container.querySelector('.timeline-progress').id.replace('progress-', '');
-                    const audio = document.getElementById(`audio-${songId}`);
-                    const progress = container.querySelector('.timeline-progress');
-                    const rect = progress.getBoundingClientRect();
-
-                    const mouseX = e.clientX - rect.left;
-                    const percentage = Math.max(0, Math.min(1, mouseX / rect.width));
-
-                    if (audio.duration && !isNaN(audio.duration)) {
-                        audio.currentTime = audio.duration * percentage;
-
-                        const fill = document.getElementById(`fill-${songId}`);
-                        if (fill) {
-                            fill.style.width = `${percentage * 100}%`;
-                        }
-
-                        const currentTime = document.getElementById(`current-${songId}`);
-                        if (currentTime) {
-                            const currentMinutes = Math.floor(audio.currentTime / 60);
-                            const currentSeconds = Math.floor(audio.currentTime % 60);
-                            currentTime.textContent = `${currentMinutes}:${currentSeconds.toString().padStart(2, '0')}`;
-                        }
-                    }
-                }
-            });
-
-            // Update progress bars and time displays
-            document.querySelectorAll('audio').forEach(audio => {
-                const songId = audio.id.replace('audio-', '');
-                const fill = document.getElementById(`fill-${songId}`);
-                const currentTime = document.getElementById(`current-${songId}`);
-                const totalTime = document.getElementById(`total-${songId}`);
-                const playBtn = document.querySelector(`[data-song-id="${songId}"]`);
-
-                // Set initial duration from database
-                const dbDuration = parseInt(audio.getAttribute('data-duration')) || 180;
-                const dbMinutes = Math.floor(dbDuration / 60);
-                const dbSeconds = Math.floor(dbDuration % 60);
-                totalTime.textContent = `${dbMinutes}:${dbSeconds.toString().padStart(2, '0')}`;
-
-                // Update total time when metadata loads or when duration becomes available
-                audio.addEventListener('loadedmetadata', function() {
-                    if (!isNaN(audio.duration) && audio.duration > 0 && audio.duration !== Infinity) {
-                        const duration = audio.duration;
-                        const minutes = Math.floor(duration / 60);
-                        const seconds = Math.floor(duration % 60);
-                        totalTime.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-                    }
-                });
-
-                // Also try to set duration on canplay event
-                audio.addEventListener('canplay', function() {
-                    if (!isNaN(audio.duration) && audio.duration > 0 && audio.duration !== Infinity && totalTime.textContent === '0:00') {
-                        const duration = audio.duration;
-                        const minutes = Math.floor(duration / 60);
-                        const seconds = Math.floor(duration % 60);
-                        totalTime.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-                    }
-                });
-
-                // Update progress and current time
-                audio.addEventListener('timeupdate', function() {
-                    const progress = (audio.currentTime / audio.duration) * 100;
-                    fill.style.width = `${progress}%`;
-
-                    const currentMinutes = Math.floor(audio.currentTime / 60);
-                    const currentSeconds = Math.floor(audio.currentTime % 60);
-                    currentTime.textContent = `${currentMinutes}:${currentSeconds.toString().padStart(2, '0')}`;
-                });
-
-                // Handle play/pause state changes
-                audio.addEventListener('play', function() {
-                    if (playBtn) {
-                        playBtn.textContent = '⏸';
-                        playBtn.classList.add('playing');
-                    }
-                });
-
-                audio.addEventListener('pause', function() {
-                    if (playBtn) {
-                        playBtn.textContent = '▶';
-                        playBtn.classList.remove('playing');
-                    }
-                });
-
-                // Handle song end
-                audio.addEventListener('ended', function() {
-                    if (playBtn) {
-                        playBtn.textContent = '▶';
-                        playBtn.classList.remove('playing');
-                    }
-                    fill.style.width = '0%';
-                    currentTime.textContent = '0:00';
-                });
-            });
-        }
-
-        // Initialize audio players after DOM is ready
-        document.addEventListener('DOMContentLoaded', function() {
-            // Wait for Blazor to finish rendering
-            setTimeout(initializeAudioPlayers, 500);
-        });
-
-        // Also initialize immediately in case DOMContentLoaded already fired
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                setTimeout(initializeAudioPlayers, 500);
-            });
-        } else {
-            // DOM already loaded
-            setTimeout(initializeAudioPlayers, 500);
-        }
-
-        // Re-initialize when new content is loaded (for dynamic content)
-        const observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-                    // Check if audio elements were added
-                    const hasAudio = Array.from(mutation.addedNodes).some(node =>
-                        node.nodeType === 1 && (node.matches && node.matches('audio') || node.querySelector && node.querySelector('audio'))
-                    );
-                    if (hasAudio) {
-                        setTimeout(initializeAudioPlayers, 100);
-                    }
-                }
-            });
-        });
-
-</script>
-
-
-<div class="page-container">
-    <div class="header">
-        <div class="logo" @onclick="NavigateHome">Aurora</div>
-        <div class="nav-buttons">
-            <button class="nav-btn" @onclick="Logout">Logout</button>
-        </div>
+<!-- ===== MAIN PAGE CONTAINER ===== -->
+<div class="songs-container">
+    <!-- ===== PAGE HEADER ===== -->
+    <div class="songs-header">
+        <h1 class="songs-title">My Songs</h1>                    <!-- Page title with gradient effect -->
+        <button class="upload-btn" @onclick="ShowUploadForm">Upload Song</button> <!-- Opens upload modal -->
     </div>
 
-    <div class="search-section">
-        <div class="search-container">
-            <input
-                class="search-bar"
-                placeholder="Search songs across the galaxy..."
-                @bind="SearchQuery"
-                @oninput="OnSearchInput" />
+    <!-- ===== SONGS GRID ===== -->
+    <div class="songs-grid">
+        @foreach (var song in userSongs)
+        {
+            <!-- ===== INDIVIDUAL SONG CARD ===== -->
+            <div class="song-card">
+                <!-- Song title -->
+                <div class="song-title">@song.Title</div>
 
-            <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21 21L16.5 16.5M19 11C19 15.4183 15.4183 19 11 19C6.58172 19 3 15.4183 3 11C3 6.58172 6.58172 3 11 3C15.4183 3 19 6.58172 19 11Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        </div>
-
-        <div class="subtitle">Most trending in the universe</div>
-    </div>
-
-    <div class="content-grid">
-        <div class="songs-section">
-            @if (IsLoading)
-            {
-                <div class="loading">Loading cosmic tracks...</div>
-            }
-            else if (FilteredSongs.Any())
-            {
-                <div class="songs-grid">
-                    @foreach (var song in FilteredSongs)
+                <!-- Artist information (currently shows "Unknown Artist" for all) -->
+                <div class="song-artist">
+                    @if (songArtists.ContainsKey(song.SongId))
                     {
-                        <div class="song-card @(CurrentPlayingId == song.SongId.ToString() ? "playing" : "")" @onclick="() => PlaySong(song.SongId.ToString())">
-                            <div class="song-content">
-                                <div class="song-header">
-                                    <div>
-                                        <div class="song-title">@song.Title</div>
-                                        <div class="song-artist">
-                                            @(SongArtists.ContainsKey(song.SongId) ? SongArtists[song.SongId] : "Loading...")
-                                            @if (CurrentUser != null && song.UserId == CurrentUser.userid)
-                                            {
-                                                <button class="add-artist-btn" title="Add Artist">+</button>
-                                            }
-                                        </div>
-                                    </div>
-                                    <button class="play-button @(CurrentPlayingId == song.SongId.ToString() ? "playing" : "")">▶</button>
-                                </div>
-
-                                <div class="song-meta">
-                                    <div class="song-duration">@FormatDuration(song.Duration)</div>
-                                    <div class="sound-wave">
-                                        <div class="wave-bar"></div>
-                                        <div class="wave-bar"></div>
-                                        <div class="wave-bar"></div>
-                                        <div class="wave-bar"></div>
-                                        <div class="wave-bar"></div>
-                                        <div class="wave-bar"></div>
-                                        <div class="wave-bar"></div>
-                                        <div class="wave-bar"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            @if (CurrentPlayingId == song.SongId.ToString())
-                            {
-                                <div class="audio-player show">
-                                    <div class="audio-controls">
-                                        <button class="audio-play-btn" data-song-id="@song.SongId">▶</button>
-                                        <div class="audio-info">
-                                            <div class="audio-title">@song.Title</div>
-                                            <div class="audio-artist">@(SongArtists.ContainsKey(song.SongId) ? SongArtists[song.SongId] : "Loading...")</div>
-                                        </div>
-                                    </div>
-
-                                    <div class="audio-timeline">
-                                        <div class="timeline-container">
-                                            <div class="timeline-progress" id="progress-@song.SongId">
-                                                <div class="timeline-fill" id="fill-@song.SongId"></div>
-                                            </div>
-                                        </div>
-                                        <div class="timeline-time">
-                                            <span class="current-time" id="current-@song.SongId">0:00</span>
-                                            <span class="total-time" id="total-@song.SongId">0:00</span>
-                                        </div>
-                                    </div>
-
-                                    <audio id="audio-@song.SongId" preload="metadata" data-duration="@song.Duration" style="display: none;">
-                                        <source src="@song.FilePath" type="audio/mpeg" />
-                                        Your browser does not support the audio element.
-                                    </audio>
-                                </div>
-                            }
-                        </div>
+                        @string.Join(", ", songArtists[song.SongId])    <!-- Join multiple artists with commas -->
+                    }
+                    else
+                    {
+                        <span>Unknown Artist</span>                     <!-- Fallback for missing artist data -->
                     }
                 </div>
-            }
-            else
-            {
-                <div class="no-results">No songs found in this galaxy...</div>
-            }
-        </div>
 
-        <div class="sidebar">
-            <div class="upload-section">
-                <div class="upload-title">Upload Your Cosmic Track</div>
-
-                <div class="file-upload-container">
-                    <div class="file-input-zone">
-                        <div class="upload-icon">⬆</div>
-                        <div class="upload-text">
-                            <div class="upload-main-text">
-                                @if (SelectedFile != null)
-                                {
-                                    @SelectedFile.Name
-                                }
-                                else
-                                {
-                                    @:Drop Your Track Here
-                                }
-                            </div>
-                            <div class="upload-sub-text">
-                                @if (SelectedFile != null)
-                                {
-                                    @:File selected - Ready to upload!
-                                }
-                                else
-                                {
-                                    @:MP3 files only • Click or drag & drop
-                                }
-                            </div>
-                        </div>
-                        <InputFile
-                            class="file-input"
-                            OnChange="OnFileSelected"
-                            accept=".mp3,audio/mpeg"
-                            multiple="false" />
-                    </div>
-                </div>
-
-                <div class="upload-form">
-                    <input
-                        class="upload-input"
-                        placeholder="Song Title"
-                        @bind="UploadTitle" />
-
-                    <select
-                        class="upload-input"
-                        @bind="UploadGenreId">
-                        @foreach (var genre in Genres)
+                <!-- ===== RATING SYSTEM ===== -->
+                <div class="song-rating">
+                    <!-- Star rating display (1-5 clickable stars) -->
+                    <div class="stars">
+                        @for (int i = 1; i <= 5; i++)
                         {
-                            <option value="@genre.genreID">@genre.name</option>
+                            <span class="star @(userRatings.ContainsKey(song.SongId) && userRatings[song.SongId] >= i ? "filled" : "")"
+                                  @onclick="() => RateSongAsync(song.SongId, i)">  <!-- Click to rate song -->
+                                ★                                                      <!-- Star symbol -->
+                            </span>
                         }
-                    </select>
-
-                    <input
-                        class="upload-input"
-                        placeholder="Additional Artists (optional, comma-separated)"
-                        @bind="AdditionalArtists" />
-
-                    <div class="upload-help">
-                        💡 Add other artists by username, separated by commas (optional)
                     </div>
+
+                    <!-- Average rating display -->
+                    <span class="rating-text">
+                        @if (songRatings.ContainsKey(song.SongId) && songRatings[song.SongId] > 0)
+                        {
+                            @songRatings[song.SongId].ToString("0.0")    <!-- Show average rating -->
+                        }
+                        else
+                        {
+                            <span>No ratings</span>                     <!-- No ratings yet -->
+                        }
+                    </span>
                 </div>
 
-                <button
-                    class="upload-button"
-                    @onclick="UploadSong"
-                    disabled="@(IsUploading || SelectedFile == null || string.IsNullOrWhiteSpace(UploadTitle))">
-                    @(IsUploading ? "Uploading..." : "Launch to Galaxy")
-                </button>
+                <!-- ===== AUDIO CONTROLS ===== -->
+                <div class="audio-controls">
+                    <!-- Time display: current time | total duration -->
+                    <div class="time-display">
+                        <span>@(currentPlayingSong == song.FilePath ? currentTime : "0:00")</span>  <!-- Current playback time (MM:SS) -->
+                        <span>@FormatDuration(song.Duration)</span>     <!-- Total song duration (MM:SS) -->
+                    </div>
+
+                    <!-- Progress bar / timeline (clickable for seeking) -->
+                    <div class="progress-container" @onmousedown="e => SeekToPosition(e, song.Duration)">
+                        <div class="progress-bar" style="width: @GetProgressPercentage()%;"></div> <!-- Fills during playback -->
+                    </div>
+
+                    <!-- Play/Pause button -->
+                    <button class="play-btn" @onclick="@(() => PlayPauseSong(song.FilePath))">
+                        @(isPlaying && currentPlayingSong == song.FilePath ? "⏸" : "▶") <!-- Pause or Play icon -->
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- ===== UPLOAD MODAL (only shown when showUploadModal is true) ===== -->
+    @if (showUploadModal)
+    {
+        <div class="upload-modal">
+            <div class="upload-form">
+                <h2 style="color: white; margin-bottom: 1.5rem;">Upload New Song</h2>
+
+                <!-- Song title input -->
+                <div class="form-group">
+                    <label class="form-label">Song Title</label>
+                    <input type="text" class="form-input" @bind="songTitle" placeholder="Enter song title" />
+                </div>
+
+                <!-- File upload input (accepts only audio files) -->
+                <div class="form-group">
+                    <label class="form-label">Audio File</label>
+                    <InputFile class="form-input" OnChange="HandleFileSelection" accept="audio/*" />
+                </div>
+
+                <!-- Primary artist input -->
+                <div class="form-group">
+                    <label class="form-label">Primary Artist</label>
+                    <input type="text" class="form-input" @bind="primaryArtist" placeholder="Main artist" />
+                </div>
+
+                <!-- Additional artists (comma-separated) -->
+                <div class="form-group">
+                    <label class="form-label">Additional Artists (optional)</label>
+                    <input type="text" class="form-input" @bind="additionalArtists" placeholder="Additional artists, separated by commas" />
+                </div>
+
+                <!-- Genre selection dropdown -->
+                <div class="form-group">
+                    <label class="form-label">Genre</label>
+                    <select class="form-input" @bind="selectedGenreId">
+                        <option value="1">Pop</option>
+                        <option value="2">Rock</option>
+                        <option value="3">Hip Hop</option>
+                        <option value="4">Electronic</option>
+                        <option value="5">Jazz</option>
+                    </select>
+                </div>
+
+                <!-- Form action buttons -->
+                <div class="form-buttons">
+                    <button class="cancel-btn" @onclick="HideUploadForm">Cancel</button>     <!-- Close modal -->
+                    <button class="submit-btn" @onclick="HandleUpload">Upload</button>      <!-- Process upload -->
+                </div>
             </div>
         </div>
-    </div>
+    }
 </div>
+
+@code {
+    // ===== @CODE SECTION =====
+    // Contains C# methods that are used directly in the Razor markup
+    // These methods are called from HTML onclick events
+
+}
