@@ -31,7 +31,7 @@ namespace TestingApp
             try
             {
                 Listener inserted = await db.InsertGetObjAsync(listener, password);
-                Console.WriteLine($"Inserted user ID: {inserted.userID}");
+                Console.WriteLine($"Inserted user ID: {inserted.userid}");
             }
             catch (Exception ex)
             {
@@ -74,7 +74,7 @@ namespace TestingApp
             if (byEmail != null)
             {
                 Console.WriteLine($"Fetched user {byEmail.username}, checking reset code...");
-                if (byEmail.reset_code == code)
+                if (byEmail.ResetCode == code)
                     Console.WriteLine("Reset code matches.");
                 else
                     Console.WriteLine("Reset code does not match.");

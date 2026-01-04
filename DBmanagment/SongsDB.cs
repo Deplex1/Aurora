@@ -136,5 +136,15 @@ namespace DBL
                 await AddSongArtistAsync(songId, artistId, role);
             }
         }
+
+        /// <summary>
+        /// Executes raw SQL commands (CREATE TABLE, CREATE INDEX, etc.)
+        /// Public wrapper for the protected ExecuteNonQueryAsync method
+        /// </summary>
+        /// <param name="sql">The SQL command to execute</param>
+        public async Task ExecuteRawSqlAsync(string sql)
+        {
+            await ExecuteNonQueryAsync(sql);
+        }
     }
 }

@@ -1,16 +1,16 @@
-// =================================================================================
+@* // =================================================================================
 // Songs.razor - SONGS MANAGEMENT PAGE UI COMPONENT
 // =================================================================================
 // This file contains the HTML UI and CSS styling for the Songs page.
 // Inherits from SongsPage.cs for all backend logic.
-// NO JavaScript - all styling in CSS, basic HTML5 audio controls.
+// NO JavaScript - all styling in CSS, basic HTML5 audio controls. *@
 
-@page "/songs"                      // URL route for this page
+@page "/songs"                       // URL route for this page     
 @inherits SongsPage                // Inherits backend logic from SongsPage.cs
 
-// ===== CSS STYLING =====
+@* // ===== CSS STYLING =====
 // Modern glassmorphism design with gradients and animations
-// Responsive layout that works on all screen sizes
+// Responsive layout that works on all screen sizes *@
 <style>
     /* ===== CSS CUSTOM PROPERTIES (VARIABLES) ===== */
     /* Define color scheme for consistent theming across the page */
@@ -245,6 +245,19 @@
         box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);          /* Glow effect */
     }
 
+    /* Specific styling for select elements */
+    select.form-input {
+        background: rgba(0, 0, 0, 0.3);                        /* Darker background for select */
+        color: white;                                          /* White text */
+        cursor: pointer;                                       /* Pointer cursor for dropdown */
+    }
+
+    /* Style for select options */
+    select.form-input option {
+        background: rgba(0, 0, 0, 0.8);                        /* Dark background for options */
+        color: white;                                          /* White text for options */
+    }
+
     /* ===== FORM BUTTONS ===== */
     .form-buttons {
         display: flex;                                         /* Flexbox layout */
@@ -389,27 +402,882 @@
                 <div class="form-group">
                     <label class="form-label">Genre</label>
                     <select class="form-input" @bind="selectedGenreId">
-                        <option value="1">Pop</option>
-                        <option value="2">Rock</option>
-                        <option value="3">Hip Hop</option>
-                        <option value="4">Electronic</option>
-                        <option value="5">Jazz</option>
+                        @if (genres.Any())
+                        {
+                            @foreach (var genre in genres)
+                            {
+                                <option value="@genre.genreID">@genre.name</option>
+                            }
+                        }
+                        else
+                        {
+                            <option value="1">Loading genres...</option>
+                        }
                     </select>
                 </div>
 
                 <!-- Form action buttons -->
                 <div class="form-buttons">
                     <button class="cancel-btn" @onclick="HideUploadForm">Cancel</button>     <!-- Close modal -->
-                    <button class="submit-btn" @onclick="HandleUpload">Upload</button>      <!-- Process upload -->
+                    <button class="submit-btn" @onclick="StartUploadProcess">Upload</button>      <!-- Process upload -->
                 </div>
             </div>
         </div>
     }
 </div>
 
+@using Models
+@using DBL
+@using Microsoft.AspNetCore.Components.Forms
+@using System.IO
+@using System
+@using System.Threading.Tasks
+@using System.Collections.Generic
+@using System.Linq
+@using TagLib
+@using Microsoft.AspNetCore.Components
+
 @code {
     // ===== @CODE SECTION =====
     // Contains C# methods that are used directly in the Razor markup
     // These methods are called from HTML onclick events
 
+    // ===== FIELDS =====
+    // Song data
+    protected List<Song> userSongs = new List<Song>();
+    protected Dictionary<int, List<string>> songArtists = new Dictionary<int, List<string>>();
+    protected Dictionary<int, double> songRatings = new Dictionary<int, double>();
+    protected Dictionary<int, int> userRatings = new Dictionary<int, int>();
+
+    // Upload form fields
+    protected IBrowserFile uploadFile;
+    protected string songTitle = "";
+    protected string primaryArtist = "";
+    protected string additionalArtists = "";
+    protected List<Genre> genres = new List<Genre>();
+    protected int selectedGenreId = 1;
+    protected bool showUploadModal = false;
+
+    // User and authentication
+    protected Listener currentUser;
+
+    // Audio playback
+    protected string currentPlayingSong = "";
+    protected bool isPlaying = false;
+    protected int currentTimeSeconds = 0;
+    protected int totalDurationSeconds = 0;
+    protected string currentTime = "0:00";
+    protected string totalDuration = "0:00";
+
+    // ===== FILE UPLOAD HANDLING =====
+    // Moved here from SongsPage.cs to fix server crashing issues
+
+    protected void StartUploadProcess()
+    {
+        // Start the async upload process as fire-and-forget
+        // This prevents the UI from blocking and handles exceptions properly
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                Console.WriteLine("Starting upload process...");
+                await HandleUpload();
+                Console.WriteLine("Upload process completed successfully");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"FATAL ERROR in upload process: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+                // Reset form state on UI thread
+                await InvokeAsync(() =>
+                {
+                    uploadFile = null;
+                    songTitle = "";
+                    primaryArtist = "";
+                    additionalArtists = "";
+                    showUploadModal = false;
+                    StateHasChanged();
+                });
+            }
+        });
+    }
+
+    protected async Task HandleUpload()
+    {
+        Console.WriteLine("=== UPLOAD METHOD STARTED ===");
+
+        // ===== VALIDATION =====
+        if (!ValidateUploadInputs())
+        {
+            return; // Validation failed, already logged
+        }
+
+        try
+        {
+            // ===== STEP 1: SAVE FILE TO DISK =====
+            var filePath = await SaveUploadedFile();
+            if (string.IsNullOrEmpty(filePath))
+            {
+                throw new Exception("Failed to save uploaded file");
+            }
+
+            // ===== STEP 2: GET AUDIO DURATION =====
+            var duration = await GetAudioDurationAsync(filePath);
+
+            // ===== STEP 3: PARSE ARTISTS =====
+            var artistIds = await ParseArtistIds();
+
+            // ===== STEP 4: SAVE TO DATABASE =====
+            var songId = await SaveSongToDatabase(songTitle, duration, filePath, artistIds);
+
+            // ===== STEP 5: SUCCESS - RESET FORM =====
+            ResetUploadForm();
+            await LoadSongs(); // Refresh the song list
+            StateHasChanged();
+
+            Console.WriteLine("Upload process completed successfully!");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"UPLOAD FAILED: {ex.Message}");
+
+            // Clean up any partial uploads
+            ResetUploadForm();
+            StateHasChanged();
+        }
+    }
+
+    private bool ValidateUploadInputs()
+    {
+        if (uploadFile == null)
+        {
+            Console.WriteLine("Upload failed - no file selected");
+            return false;
+        }
+
+        if (string.IsNullOrEmpty(songTitle))
+        {
+            Console.WriteLine("Upload failed - no title provided");
+            return false;
+        }
+
+        if (currentUser == null)
+        {
+            Console.WriteLine("Upload failed - user not authenticated");
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task<string> SaveUploadedFile()
+    {
+        try
+        {
+            Console.WriteLine("STEP 1: Saving file to disk");
+
+            var fileName = $"{Guid.NewGuid()}_{uploadFile.Name}";
+            var filePath = Path.Combine("wwwroot", "audio", fileName);
+
+            Directory.CreateDirectory(Path.Combine("wwwroot", "audio"));
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await uploadFile.OpenReadStream().CopyToAsync(stream);
+            }
+
+            Console.WriteLine($"File saved successfully: {filePath}");
+            return filePath;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving file: {ex.Message}");
+            return null;
+        }
+    }
+
+    private async Task<int> GetAudioDurationAsync(string filePath)
+    {
+        try
+        {
+            Console.WriteLine("STEP 2: Reading audio duration");
+
+            await Task.Delay(200); // Ensure file is fully written
+            var duration = GetAudioDuration(filePath);
+
+            Console.WriteLine($"Duration: {duration} seconds");
+            return duration;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error reading duration: {ex.Message}, using default");
+            return 180; // Default fallback
+        }
+    }
+
+    private async Task<List<int>> ParseArtistIds()
+    {
+        Console.WriteLine("STEP 3: Parsing artists");
+
+        var allArtists = new List<string>();
+
+        // Add primary artist
+        if (!string.IsNullOrWhiteSpace(primaryArtist))
+        {
+            allArtists.Add(primaryArtist.Trim());
+        }
+        else
+        {
+            allArtists.Add(currentUser.username);
+        }
+
+        // Add additional artists
+        if (!string.IsNullOrWhiteSpace(additionalArtists))
+        {
+            var additional = additionalArtists
+                .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(a => a.Trim())
+                .Where(a => !string.IsNullOrWhiteSpace(a));
+            allArtists.AddRange(additional);
+        }
+
+        // Convert to user IDs
+        var uniqueArtists = allArtists.Distinct(StringComparer.OrdinalIgnoreCase);
+        var artistIds = new List<int>();
+
+        var listenerDB = new ListenerDB();
+        foreach (var artistName in uniqueArtists)
+        {
+            try
+            {
+                var artist = await listenerDB.GetListenerByUsernameAsync(artistName);
+                if (artist != null)
+                {
+                    artistIds.Add(artist.userid);
+                    Console.WriteLine($"Found artist: {artistName} (ID: {artist.userid})");
+                }
+                else
+                {
+                    Console.WriteLine($"Artist not found, skipping: {artistName}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error looking up artist {artistName}: {ex.Message}");
+            }
+        }
+
+        // Ensure uploader is included
+        if (!artistIds.Contains(currentUser.userid))
+        {
+            artistIds.Insert(0, currentUser.userid);
+        }
+
+        return artistIds;
+    }
+
+    private async Task<int> SaveSongToDatabase(string title, int duration, string filePath, List<int> artistIds)
+    {
+        Console.WriteLine("STEP 4: Saving to database");
+
+        var songsDB = new SongsDB();
+
+        // Insert song
+        var newSong = await songsDB.InsertSongAsync(title, duration, filePath, currentUser.userid, selectedGenreId);
+        if (newSong == null || newSong.SongId <= 0)
+        {
+            throw new Exception("Failed to insert song into database");
+        }
+
+        Console.WriteLine($"Song saved with ID: {newSong.SongId}");
+
+        // Add artists
+        if (artistIds.Any())
+        {
+            for (int i = 0; i < artistIds.Count; i++)
+            {
+                var artistId = artistIds[i];
+                var role = (i == 0) ? "main" : "featured";
+
+                try
+                {
+                    await songsDB.AddSongArtistAsync(newSong.SongId, artistId, role);
+                    Console.WriteLine($"Added artist {artistId} as {role}");
+                }
+                catch (Exception ex)
+                {
+                    if (ex.Message.Contains("song_artists") && ex.Message.Contains("doesn't exist"))
+                    {
+                        await CreateSongArtistsTableIfNotExists();
+                        await songsDB.AddSongArtistAsync(newSong.SongId, artistId, role);
+                        Console.WriteLine($"Created table and added artist {artistId}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Error adding artist {artistId}: {ex.Message}");
+                    }
+                }
+            }
+        }
+
+        return newSong.SongId;
+    }
+
+    private void ResetUploadForm()
+    {
+        uploadFile = null;
+        songTitle = "";
+        primaryArtist = "";
+        additionalArtists = "";
+        showUploadModal = false;
+    }
+
+    // ===== COMPONENT LIFECYCLE =====
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await HandleUserAuthentication();
+        }
+    }
+
+    private async Task HandleUserAuthentication()
+    {
+        // Create a demo user for testing purposes
+        // In real app: check session/cookies for logged-in user
+        currentUser = new Listener
+        {
+            userid = 1,                    // Unique user ID from database
+            username = "demo_user",        // User's display name
+            email = "demo@example.com"     // User's email address
+        };
+
+        // After user is set, load all their songs and related data
+        await LoadSongs();
+    }
+
+    // ===== DATA LOADING =====
+    private async Task LoadSongs()
+    {
+        try
+        {
+            // Clear previous data
+            userSongs.Clear();
+            songArtists.Clear();
+            songRatings.Clear();
+            userRatings.Clear();
+
+            // Create database connections
+            SongsDB songsDB = new SongsDB();
+            ListenerDB listenerDB = new ListenerDB();
+
+            // Get all songs from database
+            userSongs = await songsDB.SelectAllAsync();
+
+            // Load related data for each song
+            foreach (var song in userSongs)
+            {
+                // Load artists for this song
+                await LoadSongArtistsForSong(song, songsDB, listenerDB);
+
+                // Load ratings for this song
+                await LoadSongRatingsForSong(song, songsDB, listenerDB);
+            }
+
+            // Load genres for upload form
+            await LoadGenres();
+
+            Console.WriteLine($"Loaded {userSongs.Count} songs successfully");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading songs: {ex.Message}");
+        }
+    }
+
+    private async Task LoadSongArtistsForSong(Song song, SongsDB songsDB, ListenerDB listenerDB)
+    {
+        try
+        {
+            // Get artist IDs for this song from song_artists table
+            var artistIds = await songsDB.GetSongArtistsAsync(song.SongId);
+
+            if (artistIds.Any())
+            {
+                var artistNames = new List<string>();
+
+                // Convert artist IDs to usernames
+                foreach (var artistId in artistIds)
+                {
+                    try
+                    {
+                        var artist = await listenerDB.GetListenerByPkAsync(artistId);
+                        if (artist != null)
+                        {
+                            artistNames.Add(artist.username);
+                        }
+                        else
+                        {
+                            artistNames.Add($"User-{artistId}"); // Fallback for missing users
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error getting artist {artistId} for song {song.SongId}: {ex.Message}");
+                        artistNames.Add($"User-{artistId}"); // Fallback
+                    }
+                }
+
+                songArtists[song.SongId] = artistNames;
+            }
+            else
+            {
+                // No artists found, use uploader as default
+                try
+                {
+                    var uploader = await listenerDB.GetListenerByPkAsync(song.UserId);
+                    songArtists[song.SongId] = new List<string> {
+                        uploader?.username ?? $"User-{song.UserId}"
+                    };
+                }
+                catch
+                {
+                    songArtists[song.SongId] = new List<string> { $"User-{song.UserId}" };
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading artists for song {song.SongId}: {ex.Message}");
+            songArtists[song.SongId] = new List<string> { "Unknown Artist" };
+        }
+    }
+
+    private async Task LoadSongRatingsForSong(Song song, SongsDB songsDB, ListenerDB listenerDB)
+    {
+        try
+        {
+            // Create ratings database connection
+            RatingsDB ratingsDB = new RatingsDB();
+
+            // Get all ratings for this specific song
+            var songRatingsList = await ratingsDB.GetRatingsBySongAsync(song.SongId);
+
+            if (songRatingsList.Any())
+            {
+                // Calculate average: sum of all ratings divided by number of ratings
+                songRatings[song.SongId] = songRatingsList.Average(r => r.Rate);
+            }
+            else
+            {
+                // No ratings yet, set to 0
+                songRatings[song.SongId] = 0;
+            }
+
+            // Check if current user has rated this song
+            var userRating = await ratingsDB.GetRatingByUserAndSongAsync(currentUser.userid, song.SongId);
+            if (userRating != null)
+            {
+                // User has rated this song, store their rating (1-5)
+                userRatings[song.SongId] = userRating.Rate;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading ratings for song {song.SongId}: {ex.Message}");
+            songRatings[song.SongId] = 0;
+        }
+    }
+
+    private async Task LoadGenres()
+    {
+        try
+        {
+            GenereDB genereDB = new GenereDB();
+            genres = await genereDB.GetAllAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading genres: {ex.Message}");
+            // Fallback to empty list if loading fails
+            genres = new List<Genre>();
+        }
+    }
+
+    protected void HandleFileSelection(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            Console.WriteLine($"File selected: {e.File?.Name}, Size: {e.File?.Size} bytes");
+
+            if (e.File == null)
+            {
+                Console.WriteLine("Warning: Selected file is null");
+                uploadFile = null;
+                return;
+            }
+
+            // Basic validation
+            if (e.File.Size == 0)
+            {
+                Console.WriteLine("Warning: Selected file is empty");
+                uploadFile = null;
+                return;
+            }
+
+            if (e.File.Size > 100 * 1024 * 1024) // 100MB limit
+            {
+                Console.WriteLine($"Warning: File too large ({e.File.Size} bytes)");
+                uploadFile = null;
+                return;
+            }
+
+            // Store the selected file for upload processing
+            uploadFile = e.File;
+            Console.WriteLine("File selection completed successfully");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in HandleFileSelection: {ex.Message}");
+            uploadFile = null;
+        }
+    }
+
+    private async Task CreateSongArtistsTableIfNotExists()
+    {
+        try
+        {
+            string createTableSql = @"
+                CREATE TABLE IF NOT EXISTS song_artists (
+                    songid INT NOT NULL,
+                    userid INT NOT NULL,
+                    role VARCHAR(50) DEFAULT 'main',
+                    added_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+                    PRIMARY KEY (songid, userid),
+
+                    CONSTRAINT fk_song_artists_song
+                        FOREIGN KEY (songid) REFERENCES songs(songid)
+                        ON DELETE CASCADE,
+
+                    CONSTRAINT fk_song_artists_user
+                        FOREIGN KEY (userid) REFERENCES users(userid)
+                        ON DELETE CASCADE
+                )";
+
+            string createIndexSql = @"
+                CREATE INDEX IF NOT EXISTS idx_song_artists_songid ON song_artists(songid);
+                CREATE INDEX IF NOT EXISTS idx_song_artists_userid ON song_artists(userid);
+                CREATE INDEX IF NOT EXISTS idx_song_artists_role ON song_artists(role);";
+
+            // Use the SongsDB public method to execute the SQL
+            SongsDB songsDB = new SongsDB();
+            await songsDB.ExecuteRawSqlAsync(createTableSql);
+            await songsDB.ExecuteRawSqlAsync(createIndexSql);
+
+            Console.WriteLine("Successfully created song_artists table and indexes");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error creating song_artists table: {ex.Message}");
+            throw; // Re-throw so the calling code knows it failed
+        }
+    }
+
+    private int GetAudioDuration(string filePath)
+    {
+        try
+        {
+            Console.WriteLine($"Attempting to read duration from: {filePath}");
+
+            // Check if file exists
+            if (!System.IO.File.Exists(filePath))
+            {
+                Console.WriteLine($"File does not exist: {filePath}");
+                return 180;
+            }
+
+            // Check file size
+            var fileInfo = new System.IO.FileInfo(filePath);
+            Console.WriteLine($"File size: {fileInfo.Length} bytes");
+
+            if (fileInfo.Length == 0)
+            {
+                Console.WriteLine("File is empty");
+                return 180;
+            }
+
+            // Use TagLib to read audio file metadata
+            var file = TagLib.File.Create(filePath);
+
+            if (file == null)
+            {
+                Console.WriteLine("TagLib returned null file object");
+                return 180;
+            }
+
+            if (file.Properties == null)
+            {
+                Console.WriteLine("TagLib Properties is null");
+                return 180;
+            }
+
+            // Get duration in seconds
+            var durationTimeSpan = file.Properties.Duration;
+            Console.WriteLine($"Raw duration: {durationTimeSpan}");
+
+            int duration = (int)durationTimeSpan.TotalSeconds;
+
+            // Ensure we have a valid duration (at least 1 second)
+            if (duration <= 0)
+            {
+                Console.WriteLine($"Invalid duration {duration}, using default");
+                duration = 180; // Default fallback
+            }
+
+            Console.WriteLine($"Audio duration read: {duration} seconds for file: {filePath}");
+            return duration;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"CRITICAL ERROR reading audio duration from {filePath}: {ex.Message}");
+            Console.WriteLine($"Exception type: {ex.GetType().Name}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+            }
+            Console.WriteLine("Using default duration of 180 seconds");
+            return 180; // Default fallback
+        }
+    }
+
+    // ===== AUDIO PLAYBACK METHODS =====
+    protected void PlayPauseSong(string songPath)
+    {
+        // Check if this song is currently playing
+        if (isPlaying && currentPlayingSong == songPath)
+        {
+            // Same song is playing, so pause it
+            PauseSong();
+        }
+        else
+        {
+            // Different song or nothing playing
+            if (currentPlayingSong != songPath)
+            {
+                // Switching to a different song - reset progress
+                currentTimeSeconds = 0;
+                currentTime = "0:00";
+            }
+
+            // Play this song
+            PlaySong(songPath);
+        }
+    }
+
+    private void PlaySong(string songPath)
+    {
+        // Stop any currently playing timer first
+        if (playbackTimer != null && playbackTimer.Enabled)
+        {
+            playbackTimer.Stop();
+        }
+
+        // Find the song object to get its duration
+        var song = userSongs.FirstOrDefault(s => s.FilePath == songPath);
+        if (song != null)
+        {
+            // Set song duration for progress calculations
+            totalDurationSeconds = song.Duration;
+            totalDuration = FormatDuration(song.Duration);
+        }
+        else
+        {
+            // Song not found, don't start playback
+            return;
+        }
+
+        // Set which song is currently playing
+        currentPlayingSong = songPath;
+
+        // Update playback state
+        isPlaying = true;
+
+        // Start the playback timer
+        if (playbackTimer != null)
+        {
+            playbackTimer.Start();
+        }
+
+        // Refresh UI to show play/pause button changes
+        StateHasChanged();
+    }
+
+    private void PauseSong()
+    {
+        // Update playback state
+        isPlaying = false;
+
+        // Stop the timer
+        if (playbackTimer != null)
+        {
+            playbackTimer.Stop();
+        }
+
+        // Refresh UI
+        StateHasChanged();
+    }
+
+    private string FormatDuration(int totalSeconds)
+    {
+        int minutes = totalSeconds / 60;
+        int seconds = totalSeconds % 60;
+        return $"{minutes}:{seconds:D2}";
+    }
+
+    protected void SeekToPosition(MouseEventArgs e, int songDuration)
+    {
+        // Calculate the width of the progress bar container
+        double containerWidth = 500.0; // Placeholder
+
+        // Calculate the click ratio (0.0 to 1.0) across the progress bar
+        var clickX = Math.Max(0, Math.Min(e.OffsetX, containerWidth));
+        var clickRatio = clickX / containerWidth;
+
+        // Calculate the new seek time in seconds
+        var seekTimeSeconds = (int)(clickRatio * songDuration);
+
+        // Update the current time and format for display
+        currentTimeSeconds = seekTimeSeconds;
+        currentTime = FormatDuration(currentTimeSeconds);
+
+        // Ensure the timer is running if it was playing before seeking
+        if (isPlaying && playbackTimer != null)
+        {
+            playbackTimer.Start();
+        }
+
+        // Force UI re-render to show updated progress bar and time
+        StateHasChanged();
+    }
+
+    protected double GetProgressPercentage()
+    {
+        if (totalDurationSeconds <= 0) return 0;
+        return (double)currentTimeSeconds / totalDurationSeconds * 100;
+    }
+
+    // ===== TIMER FOR AUDIO SIMULATION =====
+    private System.Timers.Timer playbackTimer;
+
+    protected override void OnInitialized()
+    {
+        // Create timer that fires every 1 second
+        playbackTimer = new System.Timers.Timer(1000);
+        playbackTimer.Elapsed += OnPlaybackTimerElapsed;
+        playbackTimer.AutoReset = true;
+    }
+
+    private void OnPlaybackTimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
+    {
+        // Safety check - make sure we have a valid duration
+        if (totalDurationSeconds <= 0)
+        {
+            if (playbackTimer != null) playbackTimer.Stop();
+            return;
+        }
+
+        // Increment current time by 1 second
+        currentTimeSeconds++;
+
+        // Check if we've reached the end of the song
+        if (currentTimeSeconds >= totalDurationSeconds)
+        {
+            // Song finished - stop playback
+            if (playbackTimer != null) playbackTimer.Stop();
+            isPlaying = false;
+            currentTimeSeconds = 0;
+            currentTime = "0:00";
+
+            // Force UI update on the main thread
+            InvokeAsync(() => StateHasChanged());
+            return;
+        }
+
+        // Update the time display for normal playback
+        currentTime = FormatDuration(currentTimeSeconds);
+
+        // Force UI update on the main thread
+        InvokeAsync(() => StateHasChanged());
+    }
+
+    public void Dispose()
+    {
+        if (playbackTimer != null)
+        {
+            playbackTimer.Stop();
+            playbackTimer.Dispose();
+        }
+    }
+
+    // ===== RATING SYSTEM =====
+    protected async Task RateSongAsync(int songId, int rating)
+    {
+        await RateSong(songId, rating);
+    }
+
+    private async Task RateSong(int songId, int rating)
+    {
+        try
+        {
+            RatingsDB ratingsDB = new RatingsDB();
+
+            // Check if user already rated this song
+            var existingRating = await ratingsDB.GetRatingByUserAndSongAsync(currentUser.userid, songId);
+
+            if (existingRating != null)
+            {
+                // Update existing rating
+                existingRating.Rate = rating;
+                existingRating.DateRated = DateTime.Now;
+                await ratingsDB.UpdateAsync(existingRating);
+                Console.WriteLine($"Updated rating for song {songId} to {rating}");
+            }
+            else
+            {
+                // Create new rating
+                var newRating = new Rating
+                {
+                    UserId = currentUser.userid,
+                    SongId = songId,
+                    Rate = rating,
+                    DateRated = DateTime.Now
+                };
+                await ratingsDB.InsertGetObjAsync(newRating);
+                Console.WriteLine($"Created new rating for song {songId}: {rating}");
+            }
+
+            // Refresh ratings data
+            await LoadSongs();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error rating song {songId}: {ex.Message}");
+        }
+    }
+
+    // ===== UI HELPERS =====
+    protected void ShowUploadForm()
+    {
+        showUploadModal = true;
+        StateHasChanged();
+    }
+
+    protected void HideUploadForm()
+    {
+        showUploadModal = false;
+        StateHasChanged();
+    }
 }

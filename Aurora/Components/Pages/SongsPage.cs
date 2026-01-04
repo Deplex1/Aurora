@@ -16,6 +16,7 @@ using System.Collections.Generic;        // Collections like List<T> and Diction
 using System.Linq;                       // LINQ for data querying and manipulation
 using System.Timers;                     // For Timer class to simulate audio playback
 using System;                            // For Math functions
+using TagLib;                            // For reading audio file metadata
 
 namespace Aurora.Components.Pages
 {
@@ -83,6 +84,12 @@ namespace Aurora.Components.Pages
         /// User enters this in the upload form
         /// </summary>
         protected string additionalArtists = "";
+
+        /// <summary>
+        /// List of all available genres from database
+        /// Used to populate the genre dropdown
+        /// </summary>
+        protected List<Genre> genres = new List<Genre>();
 
         /// <summary>
         /// Selected genre ID for the song
@@ -225,6 +232,7 @@ namespace Aurora.Components.Pages
 
             // After user is set, load all their songs and related data
             await LoadSongs();
+            await LoadGenres();
         }
 
         // ===== DATA LOADING METHODS =====
@@ -265,15 +273,84 @@ namespace Aurora.Components.Pages
         /// </summary>
         private async Task LoadSongArtists()
         {
-            // Clear previous data
-            songArtists.Clear();
-
-            // For each song, add a default artist name
-            // In real implementation: query song_artists junction table
-            foreach (var song in userSongs)
+            try
             {
-                // Create list with one artist name
-                songArtists[song.SongId] = new List<string> { "Unknown Artist" };
+                // Clear previous data
+                songArtists.Clear();
+
+                // Get database connections
+                SongsDB songsDB = new SongsDB();
+                ListenerDB listenerDB = new ListenerDB();
+
+                // For each song, get all associated artists
+                foreach (var song in userSongs)
+                {
+                    try
+                    {
+                        // Get artist IDs for this song from song_artists table
+                        var artistIds = await songsDB.GetSongArtistsAsync(song.SongId);
+
+                        if (artistIds.Any())
+                        {
+                            var artistNames = new List<string>();
+
+                            // Convert artist IDs to usernames
+                            foreach (var artistId in artistIds)
+                            {
+                                try
+                                {
+                                    var artist = await listenerDB.GetListenerByPkAsync(artistId);
+                                    if (artist != null)
+                                    {
+                                        artistNames.Add(artist.username);
+                                    }
+                                    else
+                                    {
+                                        artistNames.Add($"User-{artistId}"); // Fallback for missing users
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine($"Error getting artist {artistId} for song {song.SongId}: {ex.Message}");
+                                    artistNames.Add($"User-{artistId}"); // Fallback
+                                }
+                            }
+
+                            songArtists[song.SongId] = artistNames;
+                        }
+                        else
+                        {
+                            // No artists found, use uploader as default
+                            try
+                            {
+                                var uploader = await listenerDB.GetListenerByPkAsync(song.UserId);
+                                songArtists[song.SongId] = new List<string> {
+                                    uploader?.username ?? $"User-{song.UserId}"
+                                };
+                            }
+                            catch
+                            {
+                                songArtists[song.SongId] = new List<string> { $"User-{song.UserId}" };
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error loading artists for song {song.SongId}: {ex.Message}");
+                        songArtists[song.SongId] = new List<string> { "Unknown Artist" };
+                    }
+                }
+
+                Console.WriteLine($"Loaded artists for {songArtists.Count} songs");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in LoadSongArtists: {ex.Message}");
+                // Fallback: set default artists for all songs
+                foreach (var song in userSongs)
+                {
+                    songArtists[song.SongId] = new List<string> { "Unknown Artist" };
+                }
             }
         }
 
@@ -330,81 +407,47 @@ namespace Aurora.Components.Pages
             }
         }
 
+        /// <summary>
+        /// Loads all available genres from the database
+        /// Called during component initialization
+        /// </summary>
+        private async Task LoadGenres()
+        {
+            try
+            {
+                GenereDB genereDB = new GenereDB();
+                genres = await genereDB.GetAllAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading genres: {ex.Message}");
+                // Fallback to empty list if loading fails
+                genres = new List<Genre>();
+            }
+        }
+
+        // ===== AUDIO FILE UTILITIES =====
+        /// <summary>
+        /// Extracts the duration from an audio file using TagLib
+        /// Returns duration in seconds, or default 180 if reading fails
+        /// </summary>
+        /// <param name="filePath">Full path to the audio file</param>
+        /// <returns>Duration in seconds</returns>
+
+
         // ===== FILE UPLOAD METHODS =====
         /// <summary>
         /// Handles the song upload process when user submits the upload form
         /// Saves file to disk, creates database record, refreshes UI
         /// </summary>
-        protected async Task HandleUpload()
-        {
-            // Validate required fields before processing
-            if (uploadFile == null || string.IsNullOrEmpty(songTitle))
-                return;  // Exit if no file or no title
-
-            try
-            {
-                // ===== STEP 1: SAVE FILE TO DISK =====
-                // Create unique filename to avoid conflicts
-                // Format: GUID + original filename
-                var fileName = $"{Guid.NewGuid()}_{uploadFile.Name}";
-
-                // Build full path: wwwroot/audio/filename.mp3
-                var filePath = Path.Combine("wwwroot", "audio", fileName);
-
-                // Ensure the audio directory exists
-                Directory.CreateDirectory(Path.Combine("wwwroot", "audio"));
-
-                // Save the uploaded file to disk
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await uploadFile.OpenReadStream().CopyToAsync(stream);
-                }
-
-                // ===== STEP 2: GET SONG DURATION =====
-                // In real app: use audio library to read actual duration from file
-                // For demo: use default 3 minutes (180 seconds)
-                int duration = 180;
-
-                // ===== STEP 3: SAVE TO DATABASE =====
-                // Create database connection and insert new song record
-                SongsDB songsDB = new SongsDB();
-                Song newSong = await songsDB.InsertSongAsync(
-                    songTitle,      // Song title from form
-                    duration,       // Duration in seconds
-                    filePath,       // File path on disk
-                    currentUser.userid,  // ID of user uploading
-                    selectedGenreId     // Selected genre ID
-                );
-
-                // ===== STEP 4: RESET FORM =====
-                // Clear all form fields
-                uploadFile = null;
-                songTitle = "";
-                primaryArtist = "";
-                additionalArtists = "";
-                showUploadModal = false;  // Close the modal
-
-                // ===== STEP 5: REFRESH UI =====
-                // Reload all songs to show the new one
-                await LoadSongs();
-
-                // Tell Blazor to re-render the UI
-                StateHasChanged();
-            }
-            catch
-            {
-                // Handle upload errors (file save, database insert, etc.)
-                // In real app: show error message to user
-            }
-        }
 
         // ===== RATING SYSTEM METHODS =====
-        /// <summary>
-        /// Handles when user clicks on a star to rate a song
-        /// Either creates new rating or updates existing one
-        /// </summary>
-        /// <param name="songId">ID of the song being rated</param>
-        /// <param name="rating">Rating value (1-5 stars)</param>
+            /// <summary>
+            /// Handles when user clicks on a star to rate a song
+            /// Either creates new rating or updates existing one
+            /// </summary>
+            /// <param name="songId">ID of the song being rated</param>
+            /// <param name="rating">Rating value (1-5 stars)</param>
         protected async Task RateSong(int songId, int rating)
         {
             // Validate rating is within allowed range
@@ -558,16 +601,6 @@ namespace Aurora.Components.Pages
             StateHasChanged();
         }
 
-        /// <summary>
-        /// Handles when user selects a file in the upload form
-        /// Stores the selected file for later processing
-        /// </summary>
-        /// <param name="e">File selection event arguments</param>
-        protected void HandleFileSelection(InputFileChangeEventArgs e)
-        {
-            // Store the selected file for upload processing
-            uploadFile = e.File;
-        }
 
         // ===== UI EVENT WRAPPER METHODS =====
         // These methods exist because Blazor onclick events can't directly call async methods
@@ -583,6 +616,7 @@ namespace Aurora.Components.Pages
         {
             await RateSong(songId, rating);
         }
+
 
         /// <summary>
         /// Wrapper for play/pause functionality
